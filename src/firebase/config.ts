@@ -2,16 +2,19 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBHCEB8IVfsM7t98vrsY1VldtZQ7oWlE5o",
-  authDomain: "tiffinbox-564cc.firebaseapp.com",
-  projectId: "tiffinbox-564cc",
-  storageBucket: "tiffinbox-564cc.firebasestorage.app",
-  messagingSenderId: "239789185849",
-  appId: "1:239789185849:web:fb81e11cfa102e7ab5e6e8",
-  measurementId: "G-X32ZZJCEH2"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "tiffinbox-564cc.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "tiffinbox-564cc",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "tiffinbox-564cc.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789012",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:1234567890123456789012",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-XXXXXXXXXX"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// Initialize Analytics only in production
+const analytics = import.meta.env.PROD ? getAnalytics(app) : null;
 
 export { app, analytics }; 
