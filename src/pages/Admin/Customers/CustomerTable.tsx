@@ -1,99 +1,48 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { 
+  getCustomers, 
+  deleteCustomer,
+  Customer 
+} from '../../../services/firestore'
 import styles from './CustomerTable.module.css'
 
-interface Customer {
-  id: string
-  name: string
-  email: string
-  phone: string
-  deliverySlot: string
-  subscriptionType: 'veg' | 'non-veg'
+// Extended interface to include status for demo purposes
+interface CustomerWithStatus extends Customer {
   status: 'active' | 'cancelled'
-  joinDate: string
 }
 
-type SortField = 'name' | 'deliverySlot' | 'joinDate'
+type SortField = 'name' | 'deliverySlot' | 'orderDate'
 type SortOrder = 'asc' | 'desc'
 
 const CustomerTable: React.FC = () => {
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customers, setCustomers] = useState<CustomerWithStatus[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'cancelled'>('all')
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
   const [isLoading, setIsLoading] = useState(true)
 
-  // Initialize with dummy data
+  // Load customers from Firestore
   useEffect(() => {
-    const dummyCustomers: Customer[] = [
-      {
-        id: '1',
-        name: 'Priya Sharma',
-        email: 'priya.sharma@email.com',
-        phone: '+91 98765 43210',
-        deliverySlot: '7:00 PM',
-        subscriptionType: 'veg',
-        status: 'active',
-        joinDate: '2024-01-15'
-      },
-      {
-        id: '2',
-        name: 'Rahul Kumar',
-        email: 'rahul.kumar@email.com',
-        phone: '+91 87654 32109',
-        deliverySlot: '8:00 PM',
-        subscriptionType: 'non-veg',
-        status: 'active',
-        joinDate: '2024-01-20'
-      },
-      {
-        id: '3',
-        name: 'Anjali Patel',
-        email: 'anjali.patel@email.com',
-        phone: '+91 76543 21098',
-        deliverySlot: '6:00 PM',
-        subscriptionType: 'veg',
-        status: 'cancelled',
-        joinDate: '2024-01-10'
-      },
-      {
-        id: '4',
-        name: 'Vikash Singh',
-        email: 'vikash.singh@email.com',
-        phone: '+91 65432 10987',
-        deliverySlot: '7:30 PM',
-        subscriptionType: 'non-veg',
-        status: 'active',
-        joinDate: '2024-01-25'
-      },
-      {
-        id: '5',
-        name: 'Meera Reddy',
-        email: 'meera.reddy@email.com',
-        phone: '+91 54321 09876',
-        deliverySlot: '8:30 PM',
-        subscriptionType: 'veg',
-        status: 'active',
-        joinDate: '2024-01-18'
-      },
-      {
-        id: '6',
-        name: 'Arjun Gupta',
-        email: 'arjun.gupta@email.com',
-        phone: '+91 43210 98765',
-        deliverySlot: '9:00 PM',
-        subscriptionType: 'non-veg',
-        status: 'cancelled',
-        joinDate: '2024-01-12'
-      }
-    ]
-
-    // Simulate loading delay
-    setTimeout(() => {
-      setCustomers(dummyCustomers)
-      setIsLoading(false)
-    }, 1000)
+    loadCustomers()
   }, [])
+
+  const loadCustomers = async () => {
+    try {
+      setIsLoading(true)
+      const customerData = await getCustomers()
+      // Add status field for demo purposes (in real app this would be in Firestore)
+      const customersWithStatus: CustomerWithStatus[] = customerData.map(customer => ({
+        ...customer,
+        status: Math.random() > 0.2 ? 'active' : 'cancelled' as 'active' | 'cancelled'
+      }))
+      setCustomers(customersWithStatus)
+    } catch (error) {
+      console.error('Error loading customers:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Filter and sort customers
   const filteredAndSortedCustomers = useMemo(() => {
@@ -122,9 +71,9 @@ const CustomerTable: React.FC = () => {
           aValue = a.deliverySlot
           bValue = b.deliverySlot
           break
-        case 'joinDate':
-          aValue = new Date(a.joinDate).getTime()
-          bValue = new Date(b.joinDate).getTime()
+        case 'orderDate':
+          aValue = a.orderDate.toMillis()
+          bValue = b.orderDate.toMillis()
           break
         default:
           aValue = a.name.toLowerCase()
@@ -144,7 +93,7 @@ const CustomerTable: React.FC = () => {
     const total = customers.length
     const active = customers.filter(c => c.status === 'active').length
     const cancelled = customers.filter(c => c.status === 'cancelled').length
-    const vegCustomers = customers.filter(c => c.subscriptionType === 'veg').length
+    const vegCustomers = customers.filter(c => c.planType === 'veg').length
 
     return { total, active, cancelled, vegCustomers }
   }, [customers])
@@ -155,10 +104,15 @@ const CustomerTable: React.FC = () => {
     alert(`Edit customer functionality would be implemented here for customer ID: ${customerId}`)
   }
 
-  const handleDelete = (customerId: string) => {
+  const handleDelete = async (customerId: string) => {
     const customer = customers.find(c => c.id === customerId)
     if (customer && window.confirm(`Are you sure you want to delete ${customer.name}?`)) {
-      setCustomers(prev => prev.filter(c => c.id !== customerId))
+      try {
+        await deleteCustomer(customerId)
+        await loadCustomers()
+      } catch (error) {
+        console.error('Error deleting customer:', error)
+      }
     }
   }
 
@@ -174,14 +128,8 @@ const CustomerTable: React.FC = () => {
         <div className={styles.header}>
           <h1 className={styles.title}>Customer Management 👥</h1>
           <p className={styles.subtitle}>
-            Manage all subscribed customers and their details
+            Loading customers...
           </p>
-        </div>
-        <div className={styles.tableContainer}>
-          <div className={styles.loadingState}>
-            <span className={styles.loadingIcon}>⏳</span>
-            <div className={styles.loadingText}>Loading customers...</div>
-          </div>
         </div>
       </div>
     )
@@ -244,8 +192,8 @@ const CustomerTable: React.FC = () => {
               <option value="name-desc">Name (Z-A)</option>
               <option value="deliverySlot-asc">Delivery Slot (Early)</option>
               <option value="deliverySlot-desc">Delivery Slot (Late)</option>
-              <option value="joinDate-desc">Join Date (Newest)</option>
-              <option value="joinDate-asc">Join Date (Oldest)</option>
+              <option value="orderDate-desc">Order Date (Newest)</option>
+              <option value="orderDate-asc">Order Date (Oldest)</option>
             </select>
           </div>
         </div>
@@ -310,7 +258,7 @@ const CustomerTable: React.FC = () => {
                   <th className={styles.tableHeadCell}>Email</th>
                   <th className={styles.tableHeadCell}>Phone Number</th>
                   <th className={styles.tableHeadCell}>Delivery Slot</th>
-                  <th className={styles.tableHeadCell}>Subscription Type</th>
+                  <th className={styles.tableHeadCell}>Plan Type</th>
                   <th className={styles.tableHeadCell}>Status</th>
                   <th className={styles.tableHeadCell}>Actions</th>
                 </tr>
@@ -333,9 +281,9 @@ const CustomerTable: React.FC = () => {
                     <td className={styles.tableCell}>
                       <div className={styles.subscriptionType}>
                         <span className={styles.typeIcon}>
-                          {customer.subscriptionType === 'veg' ? '🥬' : '🍗'}
+                          {customer.planType === 'veg' ? '🥬' : '🍗'}
                         </span>
-                        {customer.subscriptionType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
+                        {customer.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
                       </div>
                     </td>
                     <td className={styles.tableCell}>
@@ -350,14 +298,14 @@ const CustomerTable: React.FC = () => {
                       <div className={styles.actionsCell}>
                         <button
                           className={`${styles.actionButton} ${styles.editButton}`}
-                          onClick={() => handleEdit(customer.id)}
+                          onClick={() => handleEdit(customer.id!)}
                           aria-label={`Edit ${customer.name}`}
                         >
                           🖊️
                         </button>
                         <button
                           className={`${styles.actionButton} ${styles.deleteButton}`}
-                          onClick={() => handleDelete(customer.id)}
+                          onClick={() => handleDelete(customer.id!)}
                           aria-label={`Delete ${customer.name}`}
                         >
                           🗑️
@@ -381,14 +329,14 @@ const CustomerTable: React.FC = () => {
                     <div className={styles.cardActions}>
                       <button
                         className={`${styles.actionButton} ${styles.editButton}`}
-                        onClick={() => handleEdit(customer.id)}
+                        onClick={() => handleEdit(customer.id!)}
                         aria-label={`Edit ${customer.name}`}
                       >
                         🖊️
                       </button>
                       <button
                         className={`${styles.actionButton} ${styles.deleteButton}`}
-                        onClick={() => handleDelete(customer.id)}
+                        onClick={() => handleDelete(customer.id!)}
                         aria-label={`Delete ${customer.name}`}
                       >
                         🗑️
@@ -406,9 +354,9 @@ const CustomerTable: React.FC = () => {
                       <span className={styles.cardDetailValue}>{customer.deliverySlot}</span>
                     </div>
                     <div className={styles.cardDetail}>
-                      <span className={styles.cardDetailLabel}>Subscription</span>
+                      <span className={styles.cardDetailLabel}>Plan Type</span>
                       <span className={styles.cardDetailValue}>
-                        {customer.subscriptionType === 'veg' ? '🥬 Vegetarian' : '🍗 Non-Vegetarian'}
+                        {customer.planType === 'veg' ? '🥬 Vegetarian' : '🍗 Non-Vegetarian'}
                       </span>
                     </div>
                     <div className={styles.cardDetail}>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { 
+  getMenuItems, 
+  addMenuItem, 
+  updateMenuItem, 
+  deleteMenuItem,
+  MenuItem 
+} from '../../../services/firestore'
 import styles from './MenuEditor.module.css'
-
-interface Meal {
-  id: string
-  name: string
-  description: string
-  tag: string
-  category: 'veg' | 'non-veg'
-  isSpecial: boolean
-}
 
 interface FormData {
   name: string
@@ -20,8 +18,9 @@ interface FormData {
 
 const MenuEditor: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'veg' | 'non-veg'>('veg')
-  const [meals, setMeals] = useState<Meal[]>([])
-  const [editingMeal, setEditingMeal] = useState<Meal | null>(null)
+  const [meals, setMeals] = useState<MenuItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingMeal, setEditingMeal] = useState<MenuItem | null>(null)
   const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
@@ -30,60 +29,22 @@ const MenuEditor: React.FC = () => {
     isSpecial: false
   })
 
-  // Initialize with dummy data
+  // Load menu items from Firestore
   useEffect(() => {
-    const dummyMeals: Meal[] = [
-      {
-        id: '1',
-        name: 'Paneer Butter Masala + 2 Rotis + Jeera Rice',
-        description: 'Creamy paneer curry with aromatic jeera rice and fresh rotis',
-        tag: 'High Protein',
-        category: 'veg',
-        isSpecial: true
-      },
-      {
-        id: '2',
-        name: 'Dal Makhani + Aloo Gobi + Rice',
-        description: 'Rich dal makhani with spiced aloo gobi and basmati rice',
-        tag: 'Comfort Food',
-        category: 'veg',
-        isSpecial: false
-      },
-      {
-        id: '3',
-        name: 'Rajma Chawal + Mixed Veg',
-        description: 'Traditional rajma curry with seasonal mixed vegetables',
-        tag: 'Traditional',
-        category: 'veg',
-        isSpecial: false
-      },
-      {
-        id: '4',
-        name: 'Butter Chicken + Basmati Rice + Naan',
-        description: 'Creamy tomato-based chicken curry with fragrant rice and naan',
-        tag: 'Signature Dish',
-        category: 'non-veg',
-        isSpecial: true
-      },
-      {
-        id: '5',
-        name: 'Chicken Biryani + Raita',
-        description: 'Aromatic chicken biryani with cooling raita and boiled egg',
-        tag: "Chef's Special",
-        category: 'non-veg',
-        isSpecial: false
-      },
-      {
-        id: '6',
-        name: 'Fish Curry + Coconut Rice',
-        description: 'South Indian style fish curry with coconut rice and papad',
-        tag: 'Regional Special',
-        category: 'non-veg',
-        isSpecial: false
-      }
-    ]
-    setMeals(dummyMeals)
+    loadMenuItems()
   }, [])
+
+  const loadMenuItems = async () => {
+    try {
+      setLoading(true)
+      const items = await getMenuItems()
+      setMeals(items)
+    } catch (error) {
+      console.error('Error loading menu items:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredMeals = meals.filter(meal => meal.category === activeTab)
   const totalMeals = filteredMeals.length
@@ -99,40 +60,41 @@ const MenuEditor: React.FC = () => {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.name.trim()) return
 
-    if (editingMeal) {
-      // Update existing meal
-      setMeals(prev => prev.map(meal => 
-        meal.id === editingMeal.id 
-          ? { ...meal, ...formData }
-          : meal
-      ))
-      setEditingMeal(null)
-    } else {
-      // Add new meal
-      const newMeal: Meal = {
-        id: Date.now().toString(),
-        ...formData,
-        category: activeTab
+    try {
+      if (editingMeal) {
+        // Update existing meal
+        await updateMenuItem(editingMeal.id!, formData)
+        setEditingMeal(null)
+      } else {
+        // Add new meal
+        await addMenuItem({
+          ...formData,
+          category: activeTab
+        })
       }
-      setMeals(prev => [...prev, newMeal])
-    }
 
-    // Reset form
-    setFormData({
-      name: '',
-      description: '',
-      tag: '',
-      category: activeTab,
-      isSpecial: false
-    })
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        tag: '',
+        category: activeTab,
+        isSpecial: false
+      })
+
+      // Reload menu items
+      await loadMenuItems()
+    } catch (error) {
+      console.error('Error saving menu item:', error)
+    }
   }
 
-  const handleEdit = (meal: Meal) => {
+  const handleEdit = (meal: MenuItem) => {
     setEditingMeal(meal)
     setFormData({
       name: meal.name,
@@ -143,18 +105,24 @@ const MenuEditor: React.FC = () => {
     })
   }
 
-  const handleDelete = (mealId: string) => {
+  const handleDelete = async (mealId: string) => {
     if (window.confirm('Are you sure you want to delete this meal?')) {
-      setMeals(prev => prev.filter(meal => meal.id !== mealId))
-      if (editingMeal?.id === mealId) {
-        setEditingMeal(null)
-        setFormData({
-          name: '',
-          description: '',
-          tag: '',
-          category: activeTab,
-          isSpecial: false
-        })
+      try {
+        await deleteMenuItem(mealId)
+        await loadMenuItems()
+        
+        if (editingMeal?.id === mealId) {
+          setEditingMeal(null)
+          setFormData({
+            name: '',
+            description: '',
+            tag: '',
+            category: activeTab,
+            isSpecial: false
+          })
+        }
+      } catch (error) {
+        console.error('Error deleting menu item:', error)
       }
     }
   }
@@ -170,15 +138,29 @@ const MenuEditor: React.FC = () => {
     })
   }
 
-  const toggleSpecial = (mealId: string) => {
-    setMeals(prev => prev.map(meal => 
-      meal.id === mealId 
-        ? { ...meal, isSpecial: !meal.isSpecial }
-        : meal
-    ))
+  const toggleSpecial = async (meal: MenuItem) => {
+    try {
+      await updateMenuItem(meal.id!, { isSpecial: !meal.isSpecial })
+      await loadMenuItems()
+    } catch (error) {
+      console.error('Error updating special status:', error)
+    }
   }
 
   const isFormValid = formData.name.trim().length > 0
+
+  if (loading) {
+    return (
+      <div className={styles.menuEditor}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Menu Editor 🍽️</h1>
+          <p className={styles.subtitle}>
+            Loading menu items...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.menuEditor}>
@@ -277,7 +259,7 @@ const MenuEditor: React.FC = () => {
                         <span className={styles.toggleLabel}>Today's Special:</span>
                         <button
                           className={`${styles.toggleSwitch} ${meal.isSpecial ? styles.active : ''}`}
-                          onClick={() => toggleSpecial(meal.id)}
+                          onClick={() => toggleSpecial(meal)}
                           aria-label={`Toggle special status for ${meal.name}`}
                         >
                           <div className={styles.toggleKnob}></div>
@@ -294,7 +276,7 @@ const MenuEditor: React.FC = () => {
                       </button>
                       <button
                         className={`${styles.actionButton} ${styles.deleteButton}`}
-                        onClick={() => handleDelete(meal.id)}
+                        onClick={() => handleDelete(meal.id!)}
                         aria-label={`Delete ${meal.name}`}
                       >
                         🗑️

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../contexts/AuthContext'
 import styles from './AdminLayout.module.css'
 
 interface NavigationItem {
@@ -13,6 +14,7 @@ const AdminLayout: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const { logout, currentUser } = useAuth()
 
   // Check if we're on mobile
   useEffect(() => {
@@ -48,10 +50,13 @@ const AdminLayout: React.FC = () => {
     setIsSidebarOpen(false)
   }
 
-  const handleLogout = () => {
-    // In a real app, this would clear auth tokens, etc.
-    console.log('Logging out...')
-    navigate('/admin/login')
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/admin/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   // Get current page title based on route
@@ -128,7 +133,9 @@ const AdminLayout: React.FC = () => {
           <div className={styles.topBarRight}>
             <div className={styles.userInfo}>
               <div className={styles.userAvatar}>👤</div>
-              <span className={styles.userName}>Admin User</span>
+              <span className={styles.userName}>
+                {currentUser?.email?.split('@')[0] || 'Admin User'}
+              </span>
             </div>
             
             <button

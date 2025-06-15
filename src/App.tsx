@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
-import { PrivateRoute } from './components/PrivateRoute'
+import { AuthProvider } from './contexts/AuthContext'
+import PrivateRoute from './components/PrivateRoute'
 import Navbar from './layout/Navbar/Navbar'
 import Home from './pages/Home/Home'
 import Menu from './pages/Menu/Menu'
@@ -21,9 +21,9 @@ function App() {
           {/* Admin login route (no layout) */}
           <Route path="/admin/login" element={<AdminLogin />} />
           
-          {/* Admin routes (with admin layout) */}
+          {/* Admin routes (with admin layout and auth protection) */}
           <Route path="/admin/*" element={
-            <PrivateRoute requireAdmin>
+            <PrivateRoute>
               <AdminLayout />
             </PrivateRoute>
           }>

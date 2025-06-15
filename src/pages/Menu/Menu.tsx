@@ -1,5 +1,6 @@
 import React from 'react'
 import MenuToggleTable from './MenuToggleTable/MenuToggleTable'
+import MenuTable from '../../components/MenuTable/MenuTable'
 import WeeklyShowcase from './WeeklyShowcase/WeeklyShowcase'
 
 const Menu: React.FC = () => {
@@ -7,6 +8,7 @@ const Menu: React.FC = () => {
     <div>
       <MenuToggleTable />
       <WeeklyShowcase />
+      <MenuTable />
     </div>
   )
 }

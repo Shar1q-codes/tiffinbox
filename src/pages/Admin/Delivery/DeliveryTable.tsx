@@ -1,26 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { 
+  getDeliveryStatuses, 
+  updateDeliveryStatus,
+  DeliveryStatus 
+} from '../../../services/firestore'
 import styles from './DeliveryTable.module.css'
 
-interface DeliveryOrder {
-  id: string
-  orderId: string
-  customerName: string
-  deliverySlot: string
-  mealType: 'veg' | 'non-veg'
-  assignedPartner: string
-  status: 'prepared' | 'pickedUp' | 'onTheWay' | 'delivered'
-  orderTime: string
-}
-
-type SortField = 'deliverySlot' | 'status' | 'orderTime'
+type SortField = 'deliverySlot' | 'status' | 'lastUpdated'
 type SortOrder = 'asc' | 'desc'
 
 const DeliveryTable: React.FC = () => {
-  const [orders, setOrders] = useState<DeliveryOrder[]>([])
+  const [orders, setOrders] = useState<DeliveryStatus[]>([])
   const [partnerFilter, setPartnerFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortField, setSortField] = useState<SortField>('deliverySlot')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+  const [sortField, setSortField] = useState<SortField>('lastUpdated')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [isLoading, setIsLoading] = useState(true)
 
   // Delivery partners list
@@ -40,97 +34,22 @@ const DeliveryTable: React.FC = () => {
     { value: 'delivered', label: 'Delivered', icon: '✅' }
   ]
 
-  // Initialize with dummy data
+  // Load delivery statuses from Firestore
   useEffect(() => {
-    const dummyOrders: DeliveryOrder[] = [
-      {
-        id: '1',
-        orderId: 'TXN5782341',
-        customerName: 'Priya Sharma',
-        deliverySlot: '7:00 PM',
-        mealType: 'veg',
-        assignedPartner: 'ravi',
-        status: 'onTheWay',
-        orderTime: '2024-01-30T10:30:00'
-      },
-      {
-        id: '2',
-        orderId: 'TXN5782342',
-        customerName: 'Rahul Kumar',
-        deliverySlot: '7:30 PM',
-        mealType: 'non-veg',
-        assignedPartner: 'anjali',
-        status: 'pickedUp',
-        orderTime: '2024-01-30T11:15:00'
-      },
-      {
-        id: '3',
-        orderId: 'TXN5782343',
-        customerName: 'Anjali Patel',
-        deliverySlot: '6:00 PM',
-        mealType: 'veg',
-        assignedPartner: 'faiz',
-        status: 'delivered',
-        orderTime: '2024-01-30T09:45:00'
-      },
-      {
-        id: '4',
-        orderId: 'TXN5782344',
-        customerName: 'Vikash Singh',
-        deliverySlot: '8:00 PM',
-        mealType: 'non-veg',
-        assignedPartner: 'unassigned',
-        status: 'prepared',
-        orderTime: '2024-01-30T12:00:00'
-      },
-      {
-        id: '5',
-        orderId: 'TXN5782345',
-        customerName: 'Meera Reddy',
-        deliverySlot: '8:30 PM',
-        mealType: 'veg',
-        assignedPartner: 'priya',
-        status: 'onTheWay',
-        orderTime: '2024-01-30T10:00:00'
-      },
-      {
-        id: '6',
-        orderId: 'TXN5782346',
-        customerName: 'Arjun Gupta',
-        deliverySlot: '9:00 PM',
-        mealType: 'non-veg',
-        assignedPartner: 'ravi',
-        status: 'prepared',
-        orderTime: '2024-01-30T11:30:00'
-      },
-      {
-        id: '7',
-        orderId: 'TXN5782347',
-        customerName: 'Kavya Nair',
-        deliverySlot: '6:30 PM',
-        mealType: 'veg',
-        assignedPartner: 'anjali',
-        status: 'delivered',
-        orderTime: '2024-01-30T09:15:00'
-      },
-      {
-        id: '8',
-        orderId: 'TXN5782348',
-        customerName: 'Rohit Joshi',
-        deliverySlot: '7:15 PM',
-        mealType: 'non-veg',
-        assignedPartner: 'unassigned',
-        status: 'prepared',
-        orderTime: '2024-01-30T12:15:00'
-      }
-    ]
-
-    // Simulate loading delay
-    setTimeout(() => {
-      setOrders(dummyOrders)
-      setIsLoading(false)
-    }, 1000)
+    loadDeliveryStatuses()
   }, [])
+
+  const loadDeliveryStatuses = async () => {
+    try {
+      setIsLoading(true)
+      const deliveryData = await getDeliveryStatuses()
+      setOrders(deliveryData)
+    } catch (error) {
+      console.error('Error loading delivery statuses:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Filter and sort orders
   const filteredAndSortedOrders = useMemo(() => {
@@ -148,21 +67,21 @@ const DeliveryTable: React.FC = () => {
 
       switch (sortField) {
         case 'deliverySlot':
-          aValue = a.deliverySlot
-          bValue = b.deliverySlot
+          aValue = a.estimatedArrival
+          bValue = b.estimatedArrival
           break
         case 'status':
           const statusOrder = { 'prepared': 1, 'pickedUp': 2, 'onTheWay': 3, 'delivered': 4 }
           aValue = statusOrder[a.status]
           bValue = statusOrder[b.status]
           break
-        case 'orderTime':
-          aValue = new Date(a.orderTime).getTime()
-          bValue = new Date(b.orderTime).getTime()
+        case 'lastUpdated':
+          aValue = a.lastUpdated.toMillis()
+          bValue = b.lastUpdated.toMillis()
           break
         default:
-          aValue = a.deliverySlot
-          bValue = b.deliverySlot
+          aValue = a.lastUpdated.toMillis()
+          bValue = b.lastUpdated.toMillis()
       }
 
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
@@ -183,20 +102,22 @@ const DeliveryTable: React.FC = () => {
     return { total, delivered, pending, unassigned }
   }, [orders])
 
-  const handlePartnerChange = (orderId: string, partnerId: string) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, assignedPartner: partnerId }
-        : order
-    ))
+  const handlePartnerChange = async (orderId: string, partnerId: string) => {
+    try {
+      await updateDeliveryStatus(orderId, { assignedPartner: partnerId })
+      await loadDeliveryStatuses()
+    } catch (error) {
+      console.error('Error updating partner assignment:', error)
+    }
   }
 
-  const handleStatusChange = (orderId: string, status: DeliveryOrder['status']) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status }
-        : order
-    ))
+  const handleStatusChange = async (orderId: string, status: DeliveryStatus['status']) => {
+    try {
+      await updateDeliveryStatus(orderId, { status })
+      await loadDeliveryStatuses()
+    } catch (error) {
+      console.error('Error updating delivery status:', error)
+    }
   }
 
   const handleView = (orderId: string) => {
@@ -205,10 +126,11 @@ const DeliveryTable: React.FC = () => {
     alert(`View order functionality would be implemented here for order: ${orderId}`)
   }
 
-  const handleRemove = (orderId: string) => {
+  const handleRemove = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId)
     if (order && window.confirm(`Are you sure you want to remove order ${order.orderId}?`)) {
-      setOrders(prev => prev.filter(o => o.id !== orderId))
+      // In a real app, you might want to delete or archive the order
+      console.log('Remove order:', orderId)
     }
   }
 
@@ -223,7 +145,7 @@ const DeliveryTable: React.FC = () => {
     return partner?.name || 'Unassigned'
   }
 
-  const getStatusInfo = (status: DeliveryOrder['status']) => {
+  const getStatusInfo = (status: DeliveryStatus['status']) => {
     const statusInfo = statusOptions.find(s => s.value === status)
     return statusInfo || { value: status, label: status, icon: '❓' }
   }
@@ -234,14 +156,8 @@ const DeliveryTable: React.FC = () => {
         <div className={styles.header}>
           <h1 className={styles.title}>Delivery Management 🚚</h1>
           <p className={styles.subtitle}>
-            Manage today's delivery assignments and track order status
+            Loading delivery orders...
           </p>
-        </div>
-        <div className={styles.tableContainer}>
-          <div className={styles.loadingState}>
-            <span className={styles.loadingIcon}>⏳</span>
-            <div className={styles.loadingText}>Loading delivery orders...</div>
-          </div>
         </div>
       </div>
     )
@@ -334,12 +250,12 @@ const DeliveryTable: React.FC = () => {
               onChange={handleSortChange}
               className={styles.sortSelect}
             >
+              <option value="lastUpdated-desc">Last Updated (Newest)</option>
+              <option value="lastUpdated-asc">Last Updated (Oldest)</option>
               <option value="deliverySlot-asc">Delivery Slot (Early)</option>
               <option value="deliverySlot-desc">Delivery Slot (Late)</option>
               <option value="status-asc">Status (Prepared First)</option>
               <option value="status-desc">Status (Delivered First)</option>
-              <option value="orderTime-desc">Order Time (Newest)</option>
-              <option value="orderTime-asc">Order Time (Oldest)</option>
             </select>
           </div>
         </div>
@@ -377,7 +293,7 @@ const DeliveryTable: React.FC = () => {
                   <th className={styles.tableHeadCell}>Order ID</th>
                   <th className={styles.tableHeadCell}>Customer Name</th>
                   <th className={styles.tableHeadCell}>Delivery Slot</th>
-                  <th className={styles.tableHeadCell}>Meal Type</th>
+                  <th className={styles.tableHeadCell}>Location</th>
                   <th className={styles.tableHeadCell}>Assigned Partner</th>
                   <th className={styles.tableHeadCell}>Status</th>
                   <th className={styles.tableHeadCell}>Actions</th>
@@ -393,20 +309,18 @@ const DeliveryTable: React.FC = () => {
                       <div className={styles.customerName}>{order.customerName}</div>
                     </td>
                     <td className={styles.tableCell}>
-                      <span className={styles.deliverySlot}>{order.deliverySlot}</span>
+                      <span className={styles.deliverySlot}>{order.estimatedArrival}</span>
                     </td>
                     <td className={styles.tableCell}>
                       <div className={styles.mealType}>
-                        <span className={styles.mealIcon}>
-                          {order.mealType === 'veg' ? '🥬' : '🍗'}
-                        </span>
-                        {order.mealType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
+                        <span className={styles.mealIcon}>📍</span>
+                        {order.currentLocation}
                       </div>
                     </td>
                     <td className={styles.tableCell}>
                       <select
                         value={order.assignedPartner}
-                        onChange={(e) => handlePartnerChange(order.id, e.target.value)}
+                        onChange={(e) => handlePartnerChange(order.id!, e.target.value)}
                         className={`${styles.partnerSelect} ${order.assignedPartner === 'unassigned' ? styles.unassigned : styles.assigned}`}
                       >
                         {deliveryPartners.map(partner => (
@@ -419,7 +333,7 @@ const DeliveryTable: React.FC = () => {
                     <td className={styles.tableCell}>
                       <select
                         value={order.status}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value as DeliveryOrder['status'])}
+                        onChange={(e) => handleStatusChange(order.id!, e.target.value as DeliveryStatus['status'])}
                         className={`${styles.statusSelect} ${styles[order.status]}`}
                       >
                         {statusOptions.map(status => (
@@ -440,7 +354,7 @@ const DeliveryTable: React.FC = () => {
                         </button>
                         <button
                           className={`${styles.actionButton} ${styles.removeButton}`}
-                          onClick={() => handleRemove(order.id)}
+                          onClick={() => handleRemove(order.id!)}
                           aria-label={`Remove order ${order.orderId}`}
                         >
                           🗑️
@@ -473,7 +387,7 @@ const DeliveryTable: React.FC = () => {
                         </button>
                         <button
                           className={`${styles.actionButton} ${styles.removeButton}`}
-                          onClick={() => handleRemove(order.id)}
+                          onClick={() => handleRemove(order.id!)}
                           aria-label={`Remove order ${order.orderId}`}
                         >
                           🗑️
@@ -483,14 +397,12 @@ const DeliveryTable: React.FC = () => {
 
                     <div className={styles.cardDetails}>
                       <div className={styles.cardDetail}>
-                        <span className={styles.cardDetailLabel}>Delivery Slot</span>
-                        <span className={styles.cardDetailValue}>{order.deliverySlot}</span>
+                        <span className={styles.cardDetailLabel}>Delivery Time</span>
+                        <span className={styles.cardDetailValue}>{order.estimatedArrival}</span>
                       </div>
                       <div className={styles.cardDetail}>
-                        <span className={styles.cardDetailLabel}>Meal Type</span>
-                        <span className={styles.cardDetailValue}>
-                          {order.mealType === 'veg' ? '🥬 Vegetarian' : '🍗 Non-Vegetarian'}
-                        </span>
+                        <span className={styles.cardDetailLabel}>Location</span>
+                        <span className={styles.cardDetailValue}>{order.currentLocation}</span>
                       </div>
                       <div className={styles.cardDetail}>
                         <span className={styles.cardDetailLabel}>Current Status</span>
@@ -511,7 +423,7 @@ const DeliveryTable: React.FC = () => {
                         <span className={styles.cardControlLabel}>Assign Partner</span>
                         <select
                           value={order.assignedPartner}
-                          onChange={(e) => handlePartnerChange(order.id, e.target.value)}
+                          onChange={(e) => handlePartnerChange(order.id!, e.target.value)}
                           className={styles.cardSelect}
                         >
                           {deliveryPartners.map(partner => (
@@ -526,7 +438,7 @@ const DeliveryTable: React.FC = () => {
                         <span className={styles.cardControlLabel}>Update Status</span>
                         <select
                           value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value as DeliveryOrder['status'])}
+                          onChange={(e) => handleStatusChange(order.id!, e.target.value as DeliveryStatus['status'])}
                           className={styles.cardSelect}
                         >
                           {statusOptions.map(status => (

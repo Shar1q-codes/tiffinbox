@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from 'react'
+import { getMenuItems, MenuItem } from '../../../services/firestore'
 import styles from './MenuToggleTable.module.css'
-
-interface Meal {
-  id: number
-  title: string
-  description: string
-  tag?: string
-  image: string
-  spicy: boolean
-  alt: string
-}
-
-interface MenuData {
-  type: 'veg' | 'non-veg'
-  meals: Meal[]
-}
 
 const MenuToggleTable: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'veg' | 'non-veg'>('veg')
   const [isVisible, setIsVisible] = useState(false)
+  const [meals, setMeals] = useState<MenuItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -38,129 +27,70 @@ const MenuToggleTable: React.FC = () => {
     return () => observer.disconnect()
   }, [])
 
-  const menuData: Record<'veg' | 'non-veg', MenuData> = {
-    veg: {
-      type: 'veg',
-      meals: [
-        {
-          id: 1,
-          title: 'Paneer Butter Masala + Jeera Rice',
-          description: 'Includes 2 flavorful curries, rice, and 2 soft chapatis',
-          tag: 'High Protein',
-          image: 'https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: false,
-          alt: 'Paneer butter masala with jeera rice and chapatis'
-        },
-        {
-          id: 2,
-          title: 'Dal Makhani + Aloo Gobi + Rice',
-          description: 'Creamy dal makhani, spiced aloo gobi, basmati rice, and fresh roti',
-          tag: "Today's Special",
-          image: 'https://images.pexels.com/photos/5560763/pexels-photo-5560763.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: false,
-          alt: 'Dal makhani with aloo gobi and basmati rice'
-        },
-        {
-          id: 3,
-          title: 'Rajma Chawal + Mixed Veg',
-          description: 'Traditional rajma curry, seasonal mixed vegetables, and steamed rice',
-          tag: 'Comfort Food',
-          image: 'https://images.pexels.com/photos/5560756/pexels-photo-5560756.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Rajma chawal with mixed vegetables'
-        },
-        {
-          id: 4,
-          title: 'Chole Bhature + Pickle',
-          description: 'Spicy chickpea curry with fluffy bhature bread and tangy pickle',
-          tag: 'Weekend Special',
-          image: 'https://images.pexels.com/photos/5560748/pexels-photo-5560748.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Chole bhature with pickle and onions'
-        },
-        {
-          id: 5,
-          title: 'Palak Paneer + Garlic Naan',
-          description: 'Fresh spinach curry with cottage cheese, served with garlic naan',
-          tag: 'Healthy Choice',
-          image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: false,
-          alt: 'Palak paneer with garlic naan bread'
-        },
-        {
-          id: 6,
-          title: 'Baingan Bharta + Tawa Roti',
-          description: 'Smoky roasted eggplant curry with freshly made tawa roti',
-          tag: 'Traditional',
-          image: 'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Baingan bharta with tawa roti'
-        }
-      ]
-    },
-    'non-veg': {
-      type: 'non-veg',
-      meals: [
-        {
-          id: 7,
-          title: 'Butter Chicken + Basmati Rice',
-          description: 'Creamy tomato-based chicken curry with fragrant basmati rice and naan',
-          tag: 'Signature Dish',
-          image: 'https://images.pexels.com/photos/2474658/pexels-photo-2474658.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: false,
-          alt: 'Butter chicken with basmati rice and naan'
-        },
-        {
-          id: 8,
-          title: 'Chicken Biryani + Raita',
-          description: 'Aromatic chicken biryani with boiled egg, served with cooling raita',
-          tag: "Chef's Special",
-          image: 'https://images.pexels.com/photos/11220209/pexels-photo-11220209.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Chicken biryani with raita and boiled egg'
-        },
-        {
-          id: 9,
-          title: 'Fish Curry + Coconut Rice',
-          description: 'South Indian style fish curry with coconut rice and papad',
-          tag: 'Regional Special',
-          image: 'https://images.pexels.com/photos/7625056/pexels-photo-7625056.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Fish curry with coconut rice and papad'
-        },
-        {
-          id: 10,
-          title: 'Mutton Curry + Jeera Rice',
-          description: 'Tender mutton curry slow-cooked with spices, served with jeera rice',
-          tag: 'Premium',
-          image: 'https://images.pexels.com/photos/8753657/pexels-photo-8753657.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Mutton curry with jeera rice'
-        },
-        {
-          id: 11,
-          title: 'Chicken Tikka Masala + Roti',
-          description: 'Grilled chicken tikka in rich masala gravy with butter roti',
-          tag: 'Popular Choice',
-          image: 'https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: false,
-          alt: 'Chicken tikka masala with butter roti'
-        },
-        {
-          id: 12,
-          title: 'Egg Curry + Paratha',
-          description: 'Spiced egg curry with onions and tomatoes, served with flaky paratha',
-          tag: 'Budget Friendly',
-          image: 'https://images.pexels.com/photos/5560756/pexels-photo-5560756.jpeg?auto=compress&cs=tinysrgb&w=600',
-          spicy: true,
-          alt: 'Egg curry with paratha bread'
-        }
-      ]
+  // Load menu items from Firestore
+  useEffect(() => {
+    loadMenuItems()
+  }, [])
+
+  const loadMenuItems = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const items = await getMenuItems()
+      setMeals(items)
+    } catch (error: any) {
+      console.error('Error loading menu items:', error)
+      setError('Unable to load menu items. Please try again later.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const currentMenu = menuData[activeTab]
+  const filteredMeals = meals.filter(meal => meal.category === activeTab)
   const currentPrice = activeTab === 'veg' ? '₹181.99' : '₹259.99'
+
+  // Default meal images
+  const getMealImage = (index: number) => {
+    const imageIds = [2474661, 5560763, 5560756, 5560748, 1640777, 2474658, 1640774]
+    const imageId = imageIds[index % imageIds.length]
+    return `https://images.pexels.com/photos/${imageId}/pexels-photo-${imageId}.jpeg?auto=compress&cs=tinysrgb&w=600`
+  }
+
+  if (loading) {
+    return (
+      <section id="menu-toggle-table" className={styles.menuToggleTable}>
+        <div className={styles.container}>
+          <div className={`${styles.toggleSection} ${isVisible ? styles.fadeIn : ''}`}>
+            <div className={styles.toggleTabs}>
+              <button className={`${styles.tab} ${styles.active}`}>
+                Loading Menu...
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section id="menu-toggle-table" className={styles.menuToggleTable}>
+        <div className={styles.container}>
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            color: '#2b2b2b'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍽️</div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Menu Coming Soon</h2>
+            <p style={{ fontSize: '1rem', opacity: 0.7 }}>
+              Our chefs are preparing an amazing menu for you. Please check back later!
+            </p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section id="menu-toggle-table" className={styles.menuToggleTable}>
@@ -186,35 +116,53 @@ const MenuToggleTable: React.FC = () => {
         {/* Daily Menu Display */}
         <div className={`${styles.menuDisplay} ${isVisible ? styles.slideUp : ''}`}>
           <div className={styles.mealsGrid}>
-            {currentMenu.meals.map((meal, index) => (
-              <div
-                key={meal.id}
-                className={`${styles.mealCard} ${isVisible ? styles.fadeIn : ''}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className={styles.imageContainer}>
-                  <img
-                    src={meal.image}
-                    alt={meal.alt}
-                    className={styles.mealImage}
-                  />
-                  {meal.tag && (
-                    <div className={styles.tagBadge}>
-                      {meal.tag}
-                    </div>
-                  )}
-                  {meal.spicy && (
-                    <div className={styles.spicyIndicator}>
-                      🌶️
-                    </div>
-                  )}
+            {filteredMeals.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '3rem', 
+                color: '#2b2b2b',
+                opacity: 0.6,
+                gridColumn: '1 / -1'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍽️</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>
+                  No {activeTab === 'veg' ? 'vegetarian' : 'non-vegetarian'} meals available yet.
                 </div>
-                <div className={styles.cardContent}>
-                  <h3 className={styles.mealTitle}>{meal.title}</h3>
-                  <p className={styles.mealDescription}>{meal.description}</p>
+                <div style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                  Our chefs are working on creating delicious {activeTab === 'veg' ? 'vegetarian' : 'non-vegetarian'} options for you!
                 </div>
               </div>
-            ))}
+            ) : (
+              filteredMeals.map((meal, index) => (
+                <div
+                  key={meal.id}
+                  className={`${styles.mealCard} ${isVisible ? styles.fadeIn : ''}`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className={styles.imageContainer}>
+                    <img
+                      src={getMealImage(index)}
+                      alt={meal.name}
+                      className={styles.mealImage}
+                    />
+                    {meal.tag && (
+                      <div className={styles.tagBadge}>
+                        {meal.tag}
+                      </div>
+                    )}
+                    {meal.isSpecial && (
+                      <div className={styles.spicyIndicator}>
+                        ⭐
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.cardContent}>
+                    <h3 className={styles.mealTitle}>{meal.name}</h3>
+                    <p className={styles.mealDescription}>{meal.description}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

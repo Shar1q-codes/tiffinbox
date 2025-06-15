@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      // Allow users to read their own document
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create their own document on first login
+      allow create: if request.auth != null && 
+        request.auth.uid == userId && 
+        request.resource.data.keys().hasAll(['email', 'isAdmin', 'createdAt']) &&
+        request.resource.data.isAdmin == false;
+      
+      // Allow users to update their own document
+      allow update: if request.auth != null && 
+        request.auth.uid == userId && 
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['email', 'isAdmin', 'createdAt']);
+    }
+    
+    // Admin-only collections
+    match /admin/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Public collections (read-only)
+    match /public/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+} 

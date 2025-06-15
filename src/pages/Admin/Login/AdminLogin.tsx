@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../contexts/AuthContext'
 import styles from './AdminLogin.module.css'
 
 interface LoginFormData {
@@ -10,8 +10,7 @@ interface LoginFormData {
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate()
-  const location = useLocation()
-  const { login, error: authError } = useAuth()
+  const { login } = useAuth()
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -48,12 +47,23 @@ const AdminLogin: React.FC = () => {
 
     try {
       await login(formData.email, formData.password)
+      console.log('Login successful!')
+      navigate('/admin/dashboard')
+    } catch (error: any) {
+      console.error('Login error:', error)
       
-      // Get the redirect path from location state or default to dashboard
-      const from = (location.state as any)?.from?.pathname || '/admin/dashboard'
-      navigate(from, { replace: true })
-    } catch (error) {
-      setErrorMessage(authError || 'Invalid email or password. Please try again.')
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/user-not-found') {
+        setErrorMessage('No account found with this email address.')
+      } else if (error.code === 'auth/wrong-password') {
+        setErrorMessage('Incorrect password. Please try again.')
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage('Invalid email address format.')
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrorMessage('Too many failed attempts. Please try again later.')
+      } else {
+        setErrorMessage('Login failed. Please check your credentials and try again.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -92,7 +102,7 @@ const AdminLogin: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className={styles.fieldInput}
-                placeholder="admin@tiffinbox.com"
+                placeholder="Enter your admin email"
                 required
                 disabled={isLoading}
               />
