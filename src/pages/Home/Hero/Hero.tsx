@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Hero.module.css'
 
 const Hero: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setIsVisible(true)
   }, [])
+
+  const handleStartSubscription = () => {
+    navigate('/subscription')
+  }
+
+  const handleViewMenu = () => {
+    navigate('/menu')
+  }
 
   return (
     <section className={styles.hero}>
@@ -22,10 +32,16 @@ const Hero: React.FC = () => {
               Fresh, nutritious meals prepared by experienced home chefs, delivered right to your doorstep.
             </p>
             <div className={styles.ctaButtons}>
-              <button className={styles.primaryBtn}>
+              <button 
+                className={styles.primaryBtn}
+                onClick={handleStartSubscription}
+              >
                 Start Your Subscription
               </button>
-              <button className={styles.secondaryBtn}>
+              <button 
+                className={styles.secondaryBtn}
+                onClick={handleViewMenu}
+              >
                 View Today's Menu
               </button>
             </div>
@@ -54,10 +70,6 @@ const Hero: React.FC = () => {
               <div className={styles.floatingCard}>
                 <div className={styles.cardContent}>
                   <div className={styles.cardIcon}>🍱</div>
-                  <div className={styles.cardText}>
-                    <span className={styles.cardTitle}>Today's Special</span>
-                    <span className={styles.cardSubtitle}>Dal Makhani & Jeera Rice</span>
-                  </div>
                 </div>
               </div>
             </div>

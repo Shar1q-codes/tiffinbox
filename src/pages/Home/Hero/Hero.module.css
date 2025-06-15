@@ -195,29 +195,11 @@
 .cardContent {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: center;
 }
 
 .cardIcon {
   font-size: 2rem;
-}
-
-.cardText {
-  display: flex;
-  flex-direction: column;
-}
-
-.cardTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #2b2b2b;
-  margin-bottom: 0.25rem;
-}
-
-.cardSubtitle {
-  font-size: 0.8rem;
-  font-weight: 400;
-  color: #d62828;
 }
 
 /* Responsive Design */
@@ -269,6 +251,7 @@
     position: static;
     margin-top: 1rem;
     display: inline-block;
+    padding: 1rem;
   }
 }
 
@@ -291,5 +274,13 @@
   
   .label {
     font-size: 0.8rem;
+  }
+  
+  .floatingCard {
+    padding: 0.75rem;
+  }
+  
+  .cardIcon {
+    font-size: 1.5rem;
   }
 }

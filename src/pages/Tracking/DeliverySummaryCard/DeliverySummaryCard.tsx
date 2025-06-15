@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { subscribeToDeliveryStatus, DeliveryStatus } from '../../../services/firestore'
-import { useAuth } from '../../../contexts/AuthContext'
+import { subscribeToDeliveryByToken, DeliveryStatus } from '../../../services/firestore'
 import styles from './DeliverySummaryCard.module.css'
 
-const DeliverySummaryCard: React.FC = () => {
+interface DeliverySummaryCardProps {
+  trackingToken: string
+  onBackToSearch: () => void
+}
+
+const DeliverySummaryCard: React.FC<DeliverySummaryCardProps> = ({ 
+  trackingToken, 
+  onBackToSearch 
+}) => {
   const [isVisible, setIsVisible] = useState(false)
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus | null>(null)
   const [loading, setLoading] = useState(true)
-  const { currentUser } = useAuth()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -27,16 +33,15 @@ const DeliverySummaryCard: React.FC = () => {
     return () => observer.disconnect()
   }, [])
 
-  // Subscribe to delivery status updates
+  // Subscribe to delivery status updates using token
   useEffect(() => {
-    // Only subscribe if user is authenticated
-    if (!currentUser?.uid) {
+    if (!trackingToken) {
       setDeliveryStatus(null)
       setLoading(false)
       return
     }
 
-    const unsubscribe = subscribeToDeliveryStatus(currentUser.uid, (status) => {
+    const unsubscribe = subscribeToDeliveryByToken(trackingToken, (status) => {
       setDeliveryStatus(status)
       setLoading(false)
     })
@@ -51,7 +56,7 @@ const DeliverySummaryCard: React.FC = () => {
       unsubscribe()
       clearTimeout(timeout)
     }
-  }, [currentUser?.uid])
+  }, [trackingToken])
 
   if (loading) {
     return (
@@ -73,23 +78,23 @@ const DeliverySummaryCard: React.FC = () => {
         <div className={styles.container}>
           <div className={`${styles.card} ${isVisible ? styles.fadeIn : ''}`}>
             <div className={styles.header}>
-              <h2 className={styles.title}>No Active Deliveries</h2>
+              <h2 className={styles.title}>Tracking Code Not Found</h2>
               <p className={styles.estimatedTime}>
-                <span className={styles.timeIcon}>🍱</span>
-                You don't have any active tiffin deliveries at the moment.
+                <span className={styles.timeIcon}>❌</span>
+                This tracking code is invalid or has expired.
               </p>
             </div>
             <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
               <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                Ready to order your next tiffin?
+                Please check your tracking code and try again.
               </p>
               <button 
                 className={styles.primaryButton}
-                onClick={() => window.location.href = '/subscription'}
+                onClick={onBackToSearch}
               >
-                <span className={styles.buttonIcon}>🍽️</span>
-                Order Now
+                <span className={styles.buttonIcon}>🔙</span>
+                Try Again
               </button>
             </div>
           </div>
@@ -102,6 +107,15 @@ const DeliverySummaryCard: React.FC = () => {
     <section id="delivery-summary-card" className={styles.deliverySummaryCard}>
       <div className={styles.container}>
         <div className={`${styles.card} ${isVisible ? styles.fadeIn : ''}`}>
+          {/* Back Button */}
+          <button 
+            className={styles.backButton}
+            onClick={onBackToSearch}
+            aria-label="Back to tracking search"
+          >
+            ← Back to Search
+          </button>
+
           {/* Header */}
           <div className={styles.header}>
             <h2 className={styles.title}>
@@ -119,13 +133,18 @@ const DeliverySummaryCard: React.FC = () => {
               <div className={styles.statusIcon}>📦</div>
               <div className={styles.statusContent}>
                 <span className={styles.statusLabel}>Current Status</span>
-                <span className={styles.statusValue}>{deliveryStatus.status}</span>
+                <span className={styles.statusValue}>
+                  {deliveryStatus.status === 'prepared' ? 'Being Prepared' :
+                   deliveryStatus.status === 'pickedUp' ? 'Picked Up' :
+                   deliveryStatus.status === 'onTheWay' ? 'On the Way' :
+                   'Delivered'}
+                </span>
               </div>
             </div>
             
             <div className={styles.liveTrackingBadge}>
               <div className={styles.liveDot}></div>
-              <span className={styles.liveText}>Live Tracking Enabled</span>
+              <span className={styles.liveText}>Live Tracking</span>
             </div>
           </div>
 
@@ -162,7 +181,11 @@ const DeliverySummaryCard: React.FC = () => {
                 <div className={styles.itemIcon}>🚚</div>
                 <div className={styles.itemContent}>
                   <span className={styles.itemLabel}>Delivery Partner</span>
-                  <span className={styles.itemValue}>{deliveryStatus.assignedPartner}</span>
+                  <span className={styles.itemValue}>
+                    {deliveryStatus.assignedPartner === 'unassigned' 
+                      ? 'Being Assigned' 
+                      : deliveryStatus.assignedPartner}
+                  </span>
                 </div>
               </div>
             </div>
@@ -172,11 +195,11 @@ const DeliverySummaryCard: React.FC = () => {
           <div className={styles.actionButtons}>
             <button className={styles.primaryButton}>
               <span className={styles.buttonIcon}>📞</span>
-              Call Delivery Partner
+              Call Support
             </button>
             <button className={styles.secondaryButton}>
-              <span className={styles.buttonIcon}>📍</span>
-              View on Map
+              <span className={styles.buttonIcon}>💬</span>
+              WhatsApp Help
             </button>
           </div>
 
@@ -191,7 +214,14 @@ const DeliverySummaryCard: React.FC = () => {
               </span>
             </div>
             <div className={styles.progressBar}>
-              <div className={styles.progressFill}></div>
+              <div 
+                className={styles.progressFill}
+                style={{
+                  width: deliveryStatus.status === 'delivered' ? '100%' : 
+                         deliveryStatus.status === 'onTheWay' ? '75%' :
+                         deliveryStatus.status === 'pickedUp' ? '50%' : '25%'
+                }}
+              ></div>
             </div>
             <div className={styles.progressSteps}>
               <div className={`${styles.step} ${styles.completed}`}>
@@ -199,15 +229,22 @@ const DeliverySummaryCard: React.FC = () => {
                 <span className={styles.stepLabel}>Prepared</span>
               </div>
               <div className={`${styles.step} ${deliveryStatus.status !== 'prepared' ? styles.completed : ''}`}>
-                <div className={styles.stepIcon}>✅</div>
+                <div className={styles.stepIcon}>
+                  {deliveryStatus.status !== 'prepared' ? '✅' : '📦'}
+                </div>
                 <span className={styles.stepLabel}>Picked Up</span>
               </div>
               <div className={`${styles.step} ${deliveryStatus.status === 'onTheWay' || deliveryStatus.status === 'delivered' ? styles.active : ''}`}>
-                <div className={styles.stepIcon}>🚚</div>
+                <div className={styles.stepIcon}>
+                  {deliveryStatus.status === 'delivered' ? '✅' : 
+                   deliveryStatus.status === 'onTheWay' ? '🚚' : '⏳'}
+                </div>
                 <span className={styles.stepLabel}>On the Way</span>
               </div>
               <div className={`${styles.step} ${deliveryStatus.status === 'delivered' ? styles.completed : ''}`}>
-                <div className={styles.stepIcon}>🏠</div>
+                <div className={styles.stepIcon}>
+                  {deliveryStatus.status === 'delivered' ? '✅' : '🏠'}
+                </div>
                 <span className={styles.stepLabel}>Delivered</span>
               </div>
             </div>

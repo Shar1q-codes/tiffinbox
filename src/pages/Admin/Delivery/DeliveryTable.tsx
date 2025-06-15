@@ -16,6 +16,7 @@ const DeliveryTable: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('lastUpdated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [isLoading, setIsLoading] = useState(true)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   // Delivery partners list
   const deliveryPartners = [
@@ -113,10 +114,38 @@ const DeliveryTable: React.FC = () => {
 
   const handleStatusChange = async (orderId: string, status: DeliveryStatus['status']) => {
     try {
+      setUpdatingStatus(orderId)
+      
+      // Show immediate feedback
+      const statusMessages = {
+        prepared: 'Updating status to "Prepared" and sending email notification...',
+        pickedUp: 'Updating status to "Picked Up" and sending email notification...',
+        onTheWay: 'Updating status to "On the Way" and sending email notification...',
+        delivered: 'Updating status to "Delivered" and sending email notification...'
+      }
+      
+      console.log(statusMessages[status])
+      
+      // Update status in Firestore (this will trigger email notification)
       await updateDeliveryStatus(orderId, { status })
+      
+      // Show success message
+      const successMessages = {
+        prepared: '✅ Status updated to "Prepared" - Customer notified via email',
+        pickedUp: '✅ Status updated to "Picked Up" - Customer notified via email',
+        onTheWay: '✅ Status updated to "On the Way" - Customer notified via email',
+        delivered: '✅ Status updated to "Delivered" - Customer notified via email'
+      }
+      
+      // Show success notification (you could use a toast library here)
+      alert(successMessages[status])
+      
       await loadDeliveryStatuses()
     } catch (error) {
       console.error('Error updating delivery status:', error)
+      alert('❌ Failed to update status. Please try again.')
+    } finally {
+      setUpdatingStatus(null)
     }
   }
 
@@ -169,8 +198,41 @@ const DeliveryTable: React.FC = () => {
       <div className={styles.header}>
         <h1 className={styles.title}>Delivery Management 🚚</h1>
         <p className={styles.subtitle}>
-          Manage today's delivery assignments and track order status
+          Manage today's delivery assignments and track order status. 
+          <strong> Customers are automatically notified via email when status changes.</strong>
         </p>
+      </div>
+
+      {/* Notification Info Banner */}
+      <div style={{
+        background: '#e8f5e8',
+        border: '2px solid #25d366',
+        borderRadius: '12px',
+        padding: '1rem',
+        marginBottom: '2rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem'
+      }}>
+        <span style={{ fontSize: '1.5rem' }}>📧</span>
+        <div>
+          <h3 style={{ 
+            fontSize: '1.1rem', 
+            fontWeight: '600', 
+            margin: '0 0 0.25rem 0',
+            color: '#2b2b2b'
+          }}>
+            Automatic Email Notifications Enabled
+          </h3>
+          <p style={{ 
+            fontSize: '0.9rem', 
+            margin: '0',
+            color: '#2b2b2b',
+            opacity: 0.8
+          }}>
+            When you update order status below, customers automatically receive email notifications with their tracking code and delivery updates.
+          </p>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -295,7 +357,7 @@ const DeliveryTable: React.FC = () => {
                   <th className={styles.tableHeadCell}>Delivery Slot</th>
                   <th className={styles.tableHeadCell}>Location</th>
                   <th className={styles.tableHeadCell}>Assigned Partner</th>
-                  <th className={styles.tableHeadCell}>Status</th>
+                  <th className={styles.tableHeadCell}>Status (Auto-Email)</th>
                   <th className={styles.tableHeadCell}>Actions</th>
                 </tr>
               </thead>
@@ -335,6 +397,11 @@ const DeliveryTable: React.FC = () => {
                         value={order.status}
                         onChange={(e) => handleStatusChange(order.id!, e.target.value as DeliveryStatus['status'])}
                         className={`${styles.statusSelect} ${styles[order.status]}`}
+                        disabled={updatingStatus === order.id}
+                        style={{
+                          opacity: updatingStatus === order.id ? 0.6 : 1,
+                          cursor: updatingStatus === order.id ? 'wait' : 'pointer'
+                        }}
                       >
                         {statusOptions.map(status => (
                           <option key={status.value} value={status.value}>
@@ -342,6 +409,16 @@ const DeliveryTable: React.FC = () => {
                           </option>
                         ))}
                       </select>
+                      {updatingStatus === order.id && (
+                        <div style={{
+                          fontSize: '0.7rem',
+                          color: '#d62828',
+                          marginTop: '0.25rem',
+                          fontWeight: '500'
+                        }}>
+                          Sending email...
+                        </div>
+                      )}
                     </td>
                     <td className={styles.tableCell}>
                       <div className={styles.actionsCell}>
@@ -435,11 +512,16 @@ const DeliveryTable: React.FC = () => {
                       </div>
                       
                       <div className={styles.cardControlGroup}>
-                        <span className={styles.cardControlLabel}>Update Status</span>
+                        <span className={styles.cardControlLabel}>Update Status (Auto-Email)</span>
                         <select
                           value={order.status}
                           onChange={(e) => handleStatusChange(order.id!, e.target.value as DeliveryStatus['status'])}
                           className={styles.cardSelect}
+                          disabled={updatingStatus === order.id}
+                          style={{
+                            opacity: updatingStatus === order.id ? 0.6 : 1,
+                            cursor: updatingStatus === order.id ? 'wait' : 'pointer'
+                          }}
                         >
                           {statusOptions.map(status => (
                             <option key={status.value} value={status.value}>
@@ -447,6 +529,17 @@ const DeliveryTable: React.FC = () => {
                             </option>
                           ))}
                         </select>
+                        {updatingStatus === order.id && (
+                          <div style={{
+                            fontSize: '0.7rem',
+                            color: '#d62828',
+                            marginTop: '0.25rem',
+                            fontWeight: '500',
+                            textAlign: 'center'
+                          }}>
+                            Sending email...
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

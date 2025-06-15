@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { addCustomer } from '../../../services/firestore'
 import styles from './SubscriptionForm.module.css'
 
@@ -18,6 +19,10 @@ const SubscriptionForm: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<'veg' | 'non-veg'>('veg')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [trackingToken, setTrackingToken] = useState<string>('')
+  const location = useLocation()
+  const navigate = useNavigate()
+  
   const [formData, setFormData] = useState<FormData>({
     name: '',
     contactNumber: '',
@@ -45,6 +50,13 @@ const SubscriptionForm: React.FC = () => {
 
     return () => observer.disconnect()
   }, [])
+
+  // Check if student discount was pre-selected from navigation
+  useEffect(() => {
+    if (location.state?.studentDiscount) {
+      setFormData(prev => ({ ...prev, studentStatus: true }))
+    }
+  }, [location.state])
 
   const deliverySlots = [
     { time: '18:00', label: '6:00 PM', icon: '🌅' },
@@ -82,8 +94,8 @@ const SubscriptionForm: React.FC = () => {
     try {
       setIsSubmitting(true)
       
-      // Save to Firebase
-      await addCustomer({
+      // Save to Firebase and get tracking token
+      const result = await addCustomer({
         name: formData.name,
         email: formData.email,
         phone: formData.contactNumber,
@@ -93,23 +105,8 @@ const SubscriptionForm: React.FC = () => {
         studentStatus: formData.studentStatus
       })
 
+      setTrackingToken(result.trackingToken)
       setSubmitSuccess(true)
-      
-      // Reset form after success
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          contactNumber: '',
-          email: '',
-          address: '',
-          deliverySlot: '',
-          planType: 'veg',
-          studentStatus: false
-        })
-        setSelectedSlot('')
-        setSelectedPlan('veg')
-        setSubmitSuccess(false)
-      }, 3000)
 
     } catch (error) {
       console.error('Error submitting subscription:', error)
@@ -117,6 +114,26 @@ const SubscriptionForm: React.FC = () => {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleTrackMyOrder = () => {
+    navigate('/tracking')
+  }
+
+  const handleNewOrder = () => {
+    setFormData({
+      name: '',
+      contactNumber: '',
+      email: '',
+      address: '',
+      deliverySlot: '',
+      planType: 'veg',
+      studentStatus: false
+    })
+    setSelectedSlot('')
+    setSelectedPlan('veg')
+    setSubmitSuccess(false)
+    setTrackingToken('')
   }
 
   const isFormValid = formData.name && formData.contactNumber && formData.email && formData.address && formData.deliverySlot
@@ -129,10 +146,21 @@ const SubscriptionForm: React.FC = () => {
         <div className={styles.container}>
           <div className={styles.successCard}>
             <div className={styles.successIcon}>🎉</div>
-            <h2 className={styles.successTitle}>Subscription Successful!</h2>
+            <h2 className={styles.successTitle}>Order Confirmed!</h2>
             <p className={styles.successMessage}>
-              Thank you for subscribing to TiffinBox! We've received your order and will start delivering delicious meals to your doorstep.
+              Thank you for subscribing to TiffinBox! Your order has been confirmed and we'll start preparing your delicious meal.
             </p>
+            
+            <div className={styles.trackingSection}>
+              <div className={styles.trackingCard}>
+                <h3 className={styles.trackingTitle}>📱 Your Tracking Code</h3>
+                <div className={styles.trackingCode}>{trackingToken}</div>
+                <p className={styles.trackingNote}>
+                  Save this code to track your delivery. We've also sent it to your email and SMS.
+                </p>
+              </div>
+            </div>
+
             <div className={styles.successDetails}>
               <div className={styles.successItem}>
                 <span className={styles.successLabel}>Plan:</span>
@@ -142,6 +170,32 @@ const SubscriptionForm: React.FC = () => {
                 <span className={styles.successLabel}>Delivery Time:</span>
                 <span className={styles.successValue}>{deliverySlots.find(slot => slot.time === formData.deliverySlot)?.label}</span>
               </div>
+              <div className={styles.successItem}>
+                <span className={styles.successLabel}>Daily Price:</span>
+                <span className={styles.successValue}>
+                  {formData.studentStatus 
+                    ? `₹${(parseFloat(currentPrice.replace('₹', '')) * 0.8).toFixed(2)} (20% student discount)`
+                    : currentPrice
+                  }
+                </span>
+              </div>
+            </div>
+
+            <div className={styles.successActions}>
+              <button 
+                className={styles.primaryButton}
+                onClick={handleTrackMyOrder}
+              >
+                <span className={styles.buttonIcon}>🚚</span>
+                Track My Order
+              </button>
+              <button 
+                className={styles.secondaryButton}
+                onClick={handleNewOrder}
+              >
+                <span className={styles.buttonIcon}>➕</span>
+                Place Another Order
+              </button>
             </div>
           </div>
         </div>

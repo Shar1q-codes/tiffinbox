@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getMenuItems, MenuItem } from '../../../services/firestore'
 import styles from './MenuToggleTable.module.css'
 
@@ -8,6 +9,7 @@ const MenuToggleTable: React.FC = () => {
   const [meals, setMeals] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -47,13 +49,16 @@ const MenuToggleTable: React.FC = () => {
   }
 
   const filteredMeals = meals.filter(meal => meal.category === activeTab)
-  const currentPrice = activeTab === 'veg' ? '₹181.99' : '₹259.99'
 
   // Default meal images
   const getMealImage = (index: number) => {
     const imageIds = [2474661, 5560763, 5560756, 5560748, 1640777, 2474658, 1640774]
     const imageId = imageIds[index % imageIds.length]
     return `https://images.pexels.com/photos/${imageId}/pexels-photo-${imageId}.jpeg?auto=compress&cs=tinysrgb&w=600`
+  }
+
+  const handleClaimDiscount = () => {
+    navigate('/subscription', { state: { studentDiscount: true } })
   }
 
   if (loading) {
@@ -166,21 +171,6 @@ const MenuToggleTable: React.FC = () => {
           </div>
         </div>
 
-        {/* Pricing Banner */}
-        <div className={`${styles.pricingBanner} ${isVisible ? styles.fadeIn : ''}`}>
-          <div className={styles.pricingContent}>
-            <h3 className={styles.pricingTitle}>Today's Price</h3>
-            <div className={styles.priceDisplay}>
-              <span className={styles.currentPrice}>
-                {activeTab === 'veg' ? 'Veg' : 'Non-Veg'} {currentPrice}/day
-              </span>
-              <span className={styles.alternatePrice}>
-                {activeTab === 'veg' ? 'Non-Veg ₹259.99' : 'Veg ₹181.99'}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Student Discount CTA */}
         <div className={`${styles.studentDiscountCta} ${isVisible ? styles.fadeIn : ''}`}>
           <div className={styles.discountCard}>
@@ -190,7 +180,10 @@ const MenuToggleTable: React.FC = () => {
             <p className={styles.discountText}>
               Get 20% off your monthly plan. Just verify your student ID during signup.
             </p>
-            <button className={styles.discountButton}>
+            <button 
+              className={styles.discountButton}
+              onClick={handleClaimDiscount}
+            >
               Claim Student Discount
             </button>
           </div>

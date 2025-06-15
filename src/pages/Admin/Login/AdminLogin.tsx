@@ -31,8 +31,8 @@ const AdminLogin: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Basic validation
-    if (!formData.email || !formData.password) {
+    // Basic validation - prevent submission if fields are empty
+    if (!formData.email.trim() || !formData.password.trim()) {
       setErrorMessage('Please fill in all fields')
       return
     }
@@ -42,6 +42,7 @@ const AdminLogin: React.FC = () => {
       return
     }
 
+    // Only set loading state if validation passes
     setIsLoading(true)
     setErrorMessage('')
 
@@ -61,6 +62,8 @@ const AdminLogin: React.FC = () => {
         setErrorMessage('Invalid email address format.')
       } else if (error.code === 'auth/too-many-requests') {
         setErrorMessage('Too many failed attempts. Please try again later.')
+      } else if (error.code === 'auth/invalid-credential') {
+        setErrorMessage('Invalid email or password. Please check your credentials.')
       } else {
         setErrorMessage('Login failed. Please check your credentials and try again.')
       }
@@ -69,7 +72,8 @@ const AdminLogin: React.FC = () => {
     }
   }
 
-  const isFormValid = formData.email && formData.password
+  // Form is valid only if both fields have content (not just whitespace)
+  const isFormValid = formData.email.trim().length > 0 && formData.password.trim().length > 0
 
   return (
     <div className={styles.adminLogin}>

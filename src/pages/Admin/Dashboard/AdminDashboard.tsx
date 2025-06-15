@@ -64,6 +64,42 @@ const AdminDashboard: React.FC = () => {
       }}>
         Welcome to Admin Dashboard 📊
       </h1>
+
+      {/* Notification Status Banner */}
+      <div style={{
+        background: '#e8f5e8',
+        border: '2px solid #25d366',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        marginBottom: '2rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem'
+      }}>
+        <span style={{ fontSize: '2rem' }}>📧</span>
+        <div>
+          <h3 style={{ 
+            fontSize: '1.2rem', 
+            fontWeight: '600', 
+            margin: '0 0 0.5rem 0',
+            color: '#2b2b2b'
+          }}>
+            Email Notifications Active
+          </h3>
+          <p style={{ 
+            fontSize: '1rem', 
+            margin: '0',
+            color: '#2b2b2b',
+            opacity: 0.8,
+            lineHeight: '1.5'
+          }}>
+            ✅ Email notifications enabled via EmailJS<br/>
+            ✅ Automatic notifications sent when delivery status changes<br/>
+            ✅ Customers receive tracking codes and real-time updates<br/>
+            ✅ Professional email templates with order details
+          </p>
+        </div>
+      </div>
       
       <div style={{
         display: 'grid',
@@ -190,8 +226,92 @@ const AdminDashboard: React.FC = () => {
             }}
             onClick={() => window.location.href = '/admin/delivery'}
           >
-            🚚 Manage Deliveries
+            🚚 Manage Deliveries & Send Emails
           </button>
+        </div>
+      </div>
+
+      {/* Email System Status */}
+      <div style={{
+        background: '#f0f9ff',
+        border: '1px solid rgba(59, 130, 246, 0.2)',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        marginBottom: '2rem'
+      }}>
+        <h3 style={{ 
+          fontSize: '1.2rem', 
+          fontWeight: '600', 
+          color: '#2b2b2b', 
+          margin: '0 0 1rem 0' 
+        }}>
+          📧 Email Notification System Status
+        </h3>
+        
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1rem',
+          marginBottom: '1rem'
+        }}>
+          <div style={{
+            background: 'rgba(37, 211, 102, 0.1)',
+            border: '1px solid #25d366',
+            borderRadius: '8px',
+            padding: '1rem'
+          }}>
+            <h4 style={{ 
+              fontSize: '1rem', 
+              fontWeight: '600', 
+              margin: '0 0 0.5rem 0',
+              color: '#2b2b2b'
+            }}>
+              ✅ Email Notifications
+            </h4>
+            <p style={{ 
+              fontSize: '0.9rem', 
+              margin: '0',
+              color: '#2b2b2b',
+              opacity: 0.8
+            }}>
+              EmailJS configured and ready. Customers receive detailed email updates with tracking codes and order information.
+            </p>
+          </div>
+
+          <div style={{
+            background: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid #3b82f6',
+            borderRadius: '8px',
+            padding: '1rem'
+          }}>
+            <h4 style={{ 
+              fontSize: '1rem', 
+              fontWeight: '600', 
+              margin: '0 0 0.5rem 0',
+              color: '#2b2b2b'
+            }}>
+              📱 Real-time Tracking
+            </h4>
+            <p style={{ 
+              fontSize: '0.9rem', 
+              margin: '0',
+              color: '#2b2b2b',
+              opacity: 0.8
+            }}>
+              Customers can track their orders using unique tracking codes. Live updates when delivery status changes.
+            </p>
+          </div>
+        </div>
+
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '8px',
+          padding: '1rem',
+          fontSize: '0.9rem',
+          color: '#2b2b2b'
+        }}>
+          <strong>🔄 How it works:</strong> When you change delivery status in the Delivery Management section, 
+          customers automatically receive email notifications with their tracking code and updated delivery information.
         </div>
       </div>
       
@@ -202,7 +322,9 @@ const AdminDashboard: React.FC = () => {
         fontFamily: 'Poppins, sans-serif',
         lineHeight: '1.6'
       }}>
-        Your TiffinBox admin dashboard is now connected to Firebase! All data is being stored and retrieved from your Firestore database. Use the navigation menu to access different admin sections.
+        Your TiffinBox admin dashboard is now connected to Firebase with email notification capabilities! 
+        All customer data is stored securely, and customers receive real-time updates via email. 
+        Use the Delivery Management section to update order statuses and automatically notify customers.
       </p>
     </div>
   )

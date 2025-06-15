@@ -1,11 +1,11 @@
 .navbar {
   position: fixed;
-  top: 0;
+  top: 0; /* Back to original position */
   left: 0;
   right: 0;
   background: #ffffff;
   border-bottom: 1px solid rgba(214, 40, 40, 0.1);
-  z-index: 1000;
+  z-index: 1000; /* Below banner */
   transition: all 0.3s ease;
   font-family: 'Poppins', sans-serif;
   width: 100%;
@@ -209,7 +209,7 @@
 /* Mobile Navigation */
 .mobileNav {
   position: fixed;
-  top: 70px;
+  top: 130px; /* Banner (60px) + navbar (70px) */
   left: 0;
   right: 0;
   background: #ffffff;
@@ -334,6 +334,10 @@
   .mobileMenuButton {
     display: flex;
   }
+  
+  .mobileNav {
+    top: 145px; /* Adjusted for mobile banner + navbar */
+  }
 }
 
 @media (max-width: 768px) {
@@ -351,7 +355,7 @@
   }
   
   .mobileNav {
-    top: 65px;
+    top: 135px; /* Mobile banner + navbar */
   }
   
   .mobileNavContent {
@@ -398,7 +402,7 @@
   }
   
   .mobileNav {
-    top: 60px;
+    top: 120px; /* Mobile banner + navbar */
   }
   
   .mobileNavContent {
@@ -475,19 +479,25 @@
 /* Smooth scrolling for anchor links */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 80px;
+  scroll-padding-top: 140px; /* Banner + navbar height */
   overflow-x: hidden;
+}
+
+@media (max-width: 968px) {
+  html {
+    scroll-padding-top: 155px;
+  }
 }
 
 @media (max-width: 768px) {
   html {
-    scroll-padding-top: 75px;
+    scroll-padding-top: 145px;
   }
 }
 
 @media (max-width: 480px) {
   html {
-    scroll-padding-top: 70px;
+    scroll-padding-top: 130px;
   }
 }
 

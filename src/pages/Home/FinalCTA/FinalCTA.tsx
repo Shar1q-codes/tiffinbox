@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './FinalCTA.module.css'
 
 const FinalCTA: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -22,6 +24,10 @@ const FinalCTA: React.FC = () => {
     return () => observer.disconnect()
   }, [])
 
+  const handleGetMyTiffin = () => {
+    navigate('/subscription')
+  }
+
   return (
     <section id="final-cta" className={styles.finalCta}>
       <div className={styles.container}>
@@ -38,7 +44,10 @@ const FinalCTA: React.FC = () => {
             Join 500+ happy customers enjoying hot meals every day
           </p>
           
-          <button className={styles.ctaButton}>
+          <button 
+            className={styles.ctaButton}
+            onClick={handleGetMyTiffin}
+          >
             Get My Tiffin
           </button>
           

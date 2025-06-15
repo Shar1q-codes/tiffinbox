@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
+import GlasgowBanner from './components/GlasgowBanner/GlasgowBanner'
 import Navbar from './layout/Navbar/Navbar'
 import Home from './pages/Home/Home'
 import Menu from './pages/Menu/Menu'
@@ -33,9 +34,10 @@ function App() {
             <Route path="delivery" element={<DeliveryTable />} />
           </Route>
           
-          {/* Main app routes (with navbar) */}
+          {/* Main app routes (with navbar and Glasgow banner) */}
           <Route path="/*" element={
             <>
+              <GlasgowBanner />
               <Navbar />
               <Routes>
                 <Route path="/" element={<Home />} />

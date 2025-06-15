@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './DeliveryPreview.module.css'
 
 const DeliveryPreview: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -21,6 +23,10 @@ const DeliveryPreview: React.FC = () => {
 
     return () => observer.disconnect()
   }, [])
+
+  const handleSeeMyTiffin = () => {
+    navigate('/tracking')
+  }
 
   return (
     <section id="delivery-preview" className={styles.deliveryPreview}>
@@ -90,7 +96,10 @@ const DeliveryPreview: React.FC = () => {
                 </div>
               </div>
               
-              <button className={styles.ctaButton}>
+              <button 
+                className={styles.ctaButton}
+                onClick={handleSeeMyTiffin}
+              >
                 See My Tiffin
               </button>
             </div>

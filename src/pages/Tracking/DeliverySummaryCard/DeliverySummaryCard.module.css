@@ -11,6 +11,30 @@
   padding: 0 2rem;
 }
 
+/* Back Button */
+.backButton {
+  background: #f5ebe0;
+  border: 2px solid #d62828;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  color: #d62828;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.backButton:hover {
+  background: #d62828;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 /* Main Card */
 .card {
   background: #ffffff;
@@ -328,6 +352,7 @@
   background: linear-gradient(90deg, #d62828 0%, #f56565 100%);
   border-radius: 4px;
   animation: progressGrow 1s ease-out;
+  transition: width 0.5s ease;
 }
 
 @keyframes progressGrow {
@@ -486,6 +511,11 @@
   .stepLabel {
     font-size: 0.7rem;
   }
+  
+  .backButton {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
 }
 
 /* High contrast mode support */
@@ -493,7 +523,8 @@
   .card,
   .summaryItem,
   .primaryButton,
-  .secondaryButton {
+  .secondaryButton,
+  .backButton {
     border: 2px solid currentColor;
   }
   
@@ -517,13 +548,15 @@
   
   .summaryItem,
   .primaryButton,
-  .secondaryButton {
+  .secondaryButton,
+  .backButton {
     transition: background-color 0.2s ease, border-color 0.2s ease;
   }
   
   .summaryItem:hover,
   .primaryButton:hover,
-  .secondaryButton:hover {
+  .secondaryButton:hover,
+  .backButton:hover {
     transform: none;
   }
   
@@ -534,7 +567,8 @@
 
 /* Focus styles for accessibility */
 .primaryButton:focus,
-.secondaryButton:focus {
+.secondaryButton:focus,
+.backButton:focus {
   outline: 2px solid #d62828;
   outline-offset: 2px;
 }

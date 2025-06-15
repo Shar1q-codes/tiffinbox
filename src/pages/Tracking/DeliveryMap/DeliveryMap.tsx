@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react'
+import { subscribeToDeliveryByToken, DeliveryStatus } from '../../../services/firestore'
 import styles from './DeliveryMap.module.css'
 
-interface DeliveryInfo {
-  eta: string
-  driverName: string
-  driverPhone: string
-  currentLocation: string
+interface DeliveryMapProps {
+  trackingToken: string
 }
 
-const DeliveryMap: React.FC = () => {
+const DeliveryMap: React.FC<DeliveryMapProps> = ({ trackingToken }) => {
   const [isVisible, setIsVisible] = useState(false)
-  const [useRealMap, setUseRealMap] = useState(true) // Toggle between real map and fallback
+  const [useRealMap, setUseRealMap] = useState(true)
+  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryStatus | null>(null)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -30,12 +29,27 @@ const DeliveryMap: React.FC = () => {
     return () => observer.disconnect()
   }, [])
 
-  // Mock delivery data - in real app this would come from props or API
-  const deliveryInfo: DeliveryInfo = {
-    eta: "7:15 PM",
-    driverName: "Ravi Kumar",
-    driverPhone: "+91 98765 43210",
-    currentLocation: "Near City Mall, 2.3 km away"
+  // Subscribe to delivery updates
+  useEffect(() => {
+    if (!trackingToken) return
+
+    const unsubscribe = subscribeToDeliveryByToken(trackingToken, (status) => {
+      setDeliveryInfo(status)
+    })
+
+    return unsubscribe
+  }, [trackingToken])
+
+  if (!deliveryInfo) {
+    return (
+      <section id="delivery-map" className={styles.deliveryMap}>
+        <div className={styles.container}>
+          <div className={`${styles.header} ${isVisible ? styles.fadeIn : ''}`}>
+            <h2 className={styles.title}>Loading Map...</h2>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -112,20 +126,24 @@ const DeliveryMap: React.FC = () => {
                   <div className={styles.etaIcon}>⏰</div>
                   <div className={styles.etaContent}>
                     <span className={styles.etaLabel}>ETA</span>
-                    <span className={styles.etaTime}>{deliveryInfo.eta}</span>
+                    <span className={styles.etaTime}>{deliveryInfo.estimatedArrival}</span>
                   </div>
                 </div>
                 
                 <div className={styles.driverSection}>
                   <div className={styles.driverIcon}>👨‍🚚</div>
                   <div className={styles.driverContent}>
-                    <span className={styles.driverLabel}>Driver</span>
-                    <span className={styles.driverName}>{deliveryInfo.driverName}</span>
+                    <span className={styles.driverLabel}>Partner</span>
+                    <span className={styles.driverName}>
+                      {deliveryInfo.assignedPartner === 'unassigned' 
+                        ? 'Being Assigned' 
+                        : deliveryInfo.assignedPartner}
+                    </span>
                   </div>
                   <button 
                     className={styles.phoneButton}
-                    onClick={() => window.open(`tel:${deliveryInfo.driverPhone}`, '_self')}
-                    aria-label={`Call ${deliveryInfo.driverName}`}
+                    onClick={() => window.open('tel:+919876543210', '_self')}
+                    aria-label="Call support"
                   >
                     📞
                   </button>
@@ -174,7 +192,13 @@ const DeliveryMap: React.FC = () => {
               <span className={styles.infoIcon}>🕒</span>
               <div className={styles.infoContent}>
                 <span className={styles.infoLabel}>Last Updated</span>
-                <span className={styles.infoValue}>2 minutes ago</span>
+                <span className={styles.infoValue}>
+                  {deliveryInfo.lastUpdated.toDate().toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </span>
               </div>
             </div>
           </div>

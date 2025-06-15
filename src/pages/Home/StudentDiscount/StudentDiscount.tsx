@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './StudentDiscount.module.css'
 
 const StudentDiscount: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -21,6 +23,11 @@ const StudentDiscount: React.FC = () => {
 
     return () => observer.disconnect()
   }, [])
+
+  const handleClaimDiscount = () => {
+    // Navigate to subscription page with student discount pre-selected
+    navigate('/subscription', { state: { studentDiscount: true } })
+  }
 
   return (
     <section id="student-discount" className={styles.studentDiscount}>
@@ -62,7 +69,10 @@ const StudentDiscount: React.FC = () => {
             </div>
             
             <div className={styles.ctaSection}>
-              <button className={styles.ctaButton}>
+              <button 
+                className={styles.ctaButton}
+                onClick={handleClaimDiscount}
+              >
                 Claim My Discount
               </button>
               <p className={styles.validationNote}>
