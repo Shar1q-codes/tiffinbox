@@ -1,0 +1,204 @@
+.navbar {
+  background: linear-gradient(135deg, 
+    var(--color-rust) 0%, 
+    #A03520 25%, 
+    var(--color-rust) 50%, 
+    #C94A2F 75%, 
+    var(--color-rust) 100%
+  );
+  border-bottom: 2px solid rgba(201, 138, 95, 0.4);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(179, 71, 39, 0.3);
+  
+  /* Premium rust texture overlay */
+}
+
+.navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(201, 138, 95, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(154, 59, 31, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(201, 138, 95, 0.25) 0%, transparent 50%),
+    linear-gradient(45deg, 
+      transparent 30%, 
+      rgba(255, 255, 255, 0.05) 50%, 
+      transparent 70%
+    );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.navContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) 0;
+  position: relative;
+  z-index: 2;
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-white);
+  text-decoration: none;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.logo::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-sand);
+}
+
+.logo:hover {
+  color: var(--color-sand);
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.logo:hover::after {
+  width: 100%;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.navLink {
+  font-weight: 600;
+  color: rgba(250, 250, 250, 0.9);
+  text-decoration: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  position: relative;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  border: 1px solid transparent;
+}
+
+.navLink:hover {
+  color: var(--color-sand);
+  background: rgba(248, 241, 234, 0.15);
+  border-color: rgba(248, 241, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.navLink.active {
+  color: var(--color-sand);
+  background: rgba(248, 241, 234, 0.2);
+  border-color: rgba(248, 241, 234, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.navLink.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: var(--color-sand);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(248, 241, 234, 0.6);
+}
+
+.mobileMenuBtn {
+  display: none;
+  background: rgba(248, 241, 234, 0.1);
+  border: 1px solid rgba(248, 241, 234, 0.3);
+  color: var(--color-sand);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(5px);
+}
+
+.mobileMenuBtn:hover {
+  background: rgba(248, 241, 234, 0.2);
+  border-color: rgba(248, 241, 234, 0.5);
+  color: var(--color-white);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mobileNav {
+  display: none;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) 0;
+  border-top: 1px solid rgba(248, 241, 234, 0.3);
+  background: rgba(179, 71, 39, 0.95);
+  backdrop-filter: blur(10px);
+  position: relative;
+}
+
+.mobileNav::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(201, 138, 95, 0.1) 0%, 
+    rgba(154, 59, 31, 0.1) 50%, 
+    rgba(201, 138, 95, 0.1) 100%
+  );
+  pointer-events: none;
+}
+
+.mobileNavLink {
+  font-weight: 600;
+  color: rgba(250, 250, 250, 0.9);
+  text-decoration: none;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  position: relative;
+  z-index: 1;
+  border-left: 3px solid transparent;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.mobileNavLink:hover,
+.mobileNavLink.active {
+  color: var(--color-sand);
+  background: rgba(248, 241, 234, 0.15);
+  border-left-color: var(--color-sand);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mobileNavLink.active {
+  background: rgba(248, 241, 234, 0.2);
+  border-left-color: var(--color-sand);
+}
+
+@media (max-width: 768px) {
+  .navLinks {
+    display: none;
+  }
+  
+  .mobileMenuBtn {
+    display: block;
+  }
+  
+  .mobileNav {
+    display: flex;
+  }
+}

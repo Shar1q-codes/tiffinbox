@@ -1,0 +1,663 @@
+.paymentPlaceholder {
+  padding: 5rem 0;
+  background: #fef6e4;
+  position: relative;
+  font-family: 'Poppins', sans-serif;
+ 
+}
+
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease-out;
+}
+
+.header.fadeIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #d62828;
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #2b2b2b;
+  opacity: 0.8;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Payment Wrapper */
+.paymentWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.paymentCard {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 3rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(214, 40, 40, 0.1);
+  width: 100%;
+  max-width: 600px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease-out 0.2s;
+}
+
+.paymentCard.slideUp {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Security Badge */
+.securityBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: #e8f5e8;
+  color: #25d366;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  margin-bottom: 2.5rem;
+  border: 1px solid rgba(37, 211, 102, 0.2);
+}
+
+.securityIcon {
+  font-size: 1.2rem;
+}
+
+.securityText {
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Payment Methods Grid */
+.methodsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.methodCard {
+  background: #f5ebe0;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.methodCard.fadeIn {
+  opacity: 1;
+  transform: translateY(0);
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.methodCard:hover {
+  background: #fef6e4;
+  border-color: #d62828;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(214, 40, 40, 0.15);
+}
+
+.methodCard.selected {
+  background: #ffffff;
+  border-color: #d62828;
+  box-shadow: 0 8px 25px rgba(214, 40, 40, 0.2);
+}
+
+/* Radio Button */
+.radioButton {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d62828;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.radioInner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.radioInner.checked {
+  background: #d62828;
+}
+
+/* Method Content */
+.methodContent {
+  flex: 1;
+}
+
+.methodHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.methodIcon {
+  font-size: 1.5rem;
+}
+
+.methodLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.methodDescription {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #2b2b2b;
+  opacity: 0.7;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Selected Method Display */
+.selectedMethodDisplay {
+  background: #e8f5e8;
+  border: 1px solid #25d366;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selectedInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.selectedIcon {
+  font-size: 1.2rem;
+}
+
+.selectedText {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #25d366;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Order Summary */
+.orderSummary {
+  background: #f5ebe0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summaryHeader {
+  margin-bottom: 1rem;
+}
+
+.summaryTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.summaryItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemLabel {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #2b2b2b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.itemPrice {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2b2b2b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.summaryDivider {
+  height: 1px;
+  background: rgba(214, 40, 40, 0.2);
+  margin: 0.5rem 0;
+}
+
+.summaryTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+}
+
+.totalLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.totalPrice {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #d62828;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Action Section */
+.actionSection {
+  text-align: center;
+}
+
+.confirmButton {
+  background: #d62828;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  padding: 1.5rem 3rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.confirmButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.confirmButton:hover::before {
+  left: 100%;
+}
+
+.confirmButton:hover:not(.disabled) {
+  background: #b91c1c;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(214, 40, 40, 0.4);
+}
+
+.confirmButton.disabled {
+  background: #cccccc;
+  color: #888888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.confirmButton.disabled::before {
+  display: none;
+}
+
+.buttonText {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.buttonIcon {
+  font-size: 1.2rem;
+}
+
+/* Trust Indicators */
+.trustIndicators {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.trustItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.trustItem:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.trustIcon {
+  font-size: 1.5rem;
+}
+
+.trustText {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2b2b2b;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .paymentPlaceholder {
+    padding: 4rem 0;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .header {
+    margin-bottom: 3rem;
+  }
+  
+  .paymentCard {
+    padding: 2rem;
+  }
+  
+  .methodsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .methodCard {
+    padding: 1.25rem;
+  }
+  
+  .methodLabel {
+    font-size: 1rem;
+  }
+  
+  .methodDescription {
+    font-size: 0.85rem;
+  }
+  
+  .orderSummary {
+    padding: 1.25rem;
+  }
+  
+  .confirmButton {
+    padding: 1.25rem 2rem;
+    font-size: 1.2rem;
+  }
+  
+  .trustIndicators {
+    gap: 1.5rem;
+  }
+  
+  .trustIcon {
+    font-size: 1.3rem;
+  }
+  
+  .trustText {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .paymentCard {
+    padding: 1.5rem;
+  }
+  
+  .securityBadge {
+    padding: 0.8rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .securityText {
+    font-size: 0.9rem;
+  }
+  
+  .methodCard {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .methodHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .methodLabel {
+    font-size: 0.95rem;
+  }
+  
+  .methodDescription {
+    font-size: 0.8rem;
+  }
+  
+  .orderSummary {
+    padding: 1rem;
+  }
+  
+  .summaryTitle {
+    font-size: 1.1rem;
+  }
+  
+  .itemLabel,
+  .itemPrice {
+    font-size: 0.9rem;
+  }
+  
+  .totalLabel {
+    font-size: 1rem;
+  }
+  
+  .totalPrice {
+    font-size: 1.2rem;
+  }
+  
+  .confirmButton {
+    padding: 1.1rem 1.5rem;
+    font-size: 1.1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .trustIndicators {
+    gap: 1rem;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .trustItem {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+  
+  .trustIcon {
+    font-size: 1.2rem;
+  }
+  
+  .trustText {
+    font-size: 0.8rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .methodCard,
+  .confirmButton,
+  .securityBadge,
+  .selectedMethodDisplay {
+    border: 2px solid currentColor;
+  }
+  
+  .paymentCard {
+    border: 2px solid #2b2b2b;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .paymentCard,
+  .methodCard {
+    transition: opacity 0.3s ease;
+  }
+  
+  .methodCard,
+  .confirmButton,
+  .trustItem {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  
+  .methodCard:hover,
+  .confirmButton:hover,
+  .trustItem:hover {
+    transform: none;
+  }
+  
+  .confirmButton::before {
+    display: none;
+  }
+  
+  .selectedMethodDisplay {
+    animation: none;
+  }
+}
+
+/* Focus styles for accessibility */
+.methodCard:focus,
+.confirmButton:focus {
+  outline: 2px solid #d62828;
+  outline-offset: 2px;
+}
+
+/* Loading state for confirm button */
+.confirmButton:disabled:not(.disabled) {
+  background: #d62828;
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.confirmButton:disabled:not(.disabled)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

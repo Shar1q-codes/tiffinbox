@@ -1,0 +1,191 @@
+/* ===============================
+   🎯 Why Choose Section - Rust-Dominant Theme
+   =============================== */
+
+.section {
+  padding: var(--spacing-4xl) 0;
+  background: var(--bg-primary);
+  position: relative;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 138, 95, 0.02) 0%,
+    rgba(179, 71, 39, 0.02) 50%,
+    rgba(201, 138, 95, 0.02) 100%
+  );
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-4xl);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.header h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  color: var(--color-rust);
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+}
+
+.header h2::after {
+  content: '';
+  position: absolute;
+  bottom: -var(--spacing-sm);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: var(--color-copper);
+  border-radius: 2px;
+}
+
+.header p {
+  font-size: 1.25rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.reasonCard {
+  background: var(--bg-secondary);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(201, 138, 95, 0.2);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reasonCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-copper);
+  transform: scaleX(0);
+  transition: transform var(--transition-normal);
+}
+
+.reasonCard:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-copper);
+}
+
+.reasonCard:hover::before {
+  transform: scaleX(1);
+}
+
+.iconWrapper {
+  color: var(--color-copper);
+  background: rgba(201, 138, 95, 0.1);
+  padding: var(--spacing-lg);
+  border-radius: 50%;
+  margin-bottom: var(--spacing-lg);
+  transition: all var(--transition-normal);
+}
+
+.reasonCard:hover .iconWrapper {
+  background: var(--color-copper);
+  color: white;
+  transform: scale(1.1);
+}
+
+.reasonCard h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--color-rust);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+}
+
+.reasonCard p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 1.1rem;
+  flex-grow: 1;
+}
+
+/* ===============================
+   📱 Responsive Design
+   =============================== */
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .reasonCard {
+    padding: var(--spacing-lg);
+  }
+  
+  .iconWrapper {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .reasonCard {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* ===============================
+   ♿ Accessibility
+   =============================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .reasonCard:hover {
+    transform: none;
+  }
+  
+  .reasonCard:hover .iconWrapper {
+    transform: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .reasonCard {
+    min-height: 280px;
+  }
+}
