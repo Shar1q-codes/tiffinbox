@@ -250,13 +250,13 @@
 }
 
 /* Loading State */
-.submitButton:disabled:not(.error) {
+.submitButton.loading {
   background: #d62828;
   opacity: 0.7;
   cursor: wait;
 }
 
-.submitButton:disabled:not(.error)::after {
+.submitButton.loading::after {
   content: '';
   position: absolute;
   top: 50%;
