@@ -77,7 +77,7 @@ const TrackingInput: React.FC<TrackingInputProps> = ({ onTrackingFound }) => {
                 disabled={isLoading}
               />
               <div className={styles.inputHint}>
-                Check your confirmation SMS or email for the tracking code
+                Check your confirmation email for the tracking code
               </div>
             </div>
 
