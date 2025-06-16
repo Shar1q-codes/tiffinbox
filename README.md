@@ -1,12 +1,64 @@
-# React + Vite
+# TiffinBox
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite application that integrates Firebase for authentication and data storage and uses EmailJS for transactional emails. The project can be deployed to Netlify, Vercel or Firebase Hosting.
 
-Currently, two official plugins are available:
+## Environment Variables
+Create a `.env` file in the project root based on `.env.example` and provide the following values:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Firebase
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
 
-## Expanding the ESLint configuration
+### EmailJS
+- `VITE_EMAILJS_SERVICE_ID`
+- `VITE_EMAILJS_TEMPLATE_ID`
+- `VITE_EMAILJS_PUBLIC_KEY`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Stripe (optional)
+If you integrate Stripe, also provide:
+- `VITE_STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_SECRET_KEY`
+
+## Running Locally
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:5173`.
+
+## Deployment
+### Netlify
+1. Build the project:
+   ```bash
+   npm run build
+   ```
+2. Deploy the `dist` folder. The provided `netlify.toml` already contains the correct build and publish settings.
+
+### Vercel
+1. Build using `npm run build`.
+2. Set the output directory to `dist` when configuring the project.
+
+### Firebase Hosting
+1. Build the project with `npm run build`.
+2. Deploy using the Firebase CLI:
+   ```bash
+   firebase deploy
+   ```
+
+## Creating an Admin User
+1. After a user signs up (or using the Firebase console), open Firestore and create a document in the `users` collection with the ID equal to the user's UID.
+2. Add the fields:
+   - `email` – the user email address.
+   - `isAdmin` – set to `true`.
+   - `createdAt` – server timestamp.
+
+Users with `isAdmin: true` can log in at `/admin/login` to access the dashboard.

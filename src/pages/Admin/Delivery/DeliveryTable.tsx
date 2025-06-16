@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { 
-  getDeliveryStatuses, 
+import {
+  getDeliveryStatuses,
   updateDeliveryStatus,
-  DeliveryStatus 
+  DeliveryStatus,
+  getApprovedRiders,
+  Rider
 } from '../../../services/firestore'
 import styles from './DeliveryTable.module.css'
 
@@ -18,14 +20,10 @@ const DeliveryTable: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
-  // Delivery partners list
-  const deliveryPartners = [
-    { id: 'unassigned', name: 'Unassigned' },
-    { id: 'ravi', name: 'Ravi Kumar' },
-    { id: 'anjali', name: 'Anjali Sharma' },
-    { id: 'faiz', name: 'Faiz Ahmed' },
-    { id: 'priya', name: 'Priya Patel' }
-  ]
+  // Delivery partners list loaded from Firestore
+  const [deliveryPartners, setDeliveryPartners] = useState<Rider[]>([
+    { id: 'unassigned', name: 'Unassigned', email: '', approved: true }
+  ])
 
   // Status options
   const statusOptions = [
@@ -38,6 +36,7 @@ const DeliveryTable: React.FC = () => {
   // Load delivery statuses from Firestore
   useEffect(() => {
     loadDeliveryStatuses()
+    loadRiders()
   }, [])
 
   const loadDeliveryStatuses = async () => {
@@ -49,6 +48,18 @@ const DeliveryTable: React.FC = () => {
       console.error('Error loading delivery statuses:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadRiders = async () => {
+    try {
+      const riders = await getApprovedRiders()
+      setDeliveryPartners([
+        { id: 'unassigned', name: 'Unassigned', email: '', approved: true },
+        ...riders
+      ])
+    } catch (error) {
+      console.error('Error loading riders:', error)
     }
   }
 

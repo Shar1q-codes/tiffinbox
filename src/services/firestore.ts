@@ -1,10 +1,11 @@
 import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  setDoc,
   query, 
   where, 
   orderBy,
@@ -435,4 +436,52 @@ export const subscribeToMenuItems = (
     } as MenuItem))
     callback(items)
   })
+}
+
+// Rider interface
+export interface Rider {
+  id?: string
+  email: string
+  name: string
+  approved: boolean
+}
+
+// Create rider profile after signup
+export const createRiderProfile = async (
+  uid: string,
+  data: { email: string; name: string }
+) => {
+  await setDoc(doc(db, 'riders', uid), {
+    email: data.email,
+    name: data.name,
+    approved: false
+  })
+}
+
+// Get all riders
+export const getRiders = async (): Promise<Rider[]> => {
+  const snapshot = await getDocs(collection(db, 'riders'))
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  } as Rider))
+}
+
+// Get only approved riders
+export const getApprovedRiders = async (): Promise<Rider[]> => {
+  const q = query(collection(db, 'riders'), where('approved', '==', true))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  } as Rider))
+}
+
+// Update rider document
+export const updateRider = async (
+  id: string,
+  data: Partial<Rider>
+) => {
+  const ref = doc(db, 'riders', id)
+  await updateDoc(ref, data)
 }
