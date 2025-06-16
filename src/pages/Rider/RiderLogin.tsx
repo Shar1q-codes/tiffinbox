@@ -2,13 +2,16 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
-<<<<<<< HEAD
-=======
 import styles from './RiderLogin.module.css'
 
 
 
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
+
+import styles from './RiderLogin.module.css'
+
+
+
+
 const RiderLogin: React.FC = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -36,8 +39,6 @@ const RiderLogin: React.FC = () => {
   }
 
   return (
-<<<<<<< HEAD
-=======
 
     <div className={styles.authContainer}>
       <h1>Rider Login</h1>
@@ -45,24 +46,18 @@ const RiderLogin: React.FC = () => {
         <div className={styles.fieldGroup}>
           <label className={styles.label}>Email</label>
 
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
     <div style={{ padding: '2rem' }}>
       <h1>Rider Login</h1>
       <form onSubmit={handleSubmit} style={{ maxWidth: '400px' }}>
         <div style={{ marginBottom: '1rem' }}>
           <label>Email</label>
-<<<<<<< HEAD
-=======
 
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             required
-<<<<<<< HEAD
-=======
 
             className={styles.input}
           />
@@ -70,23 +65,16 @@ const RiderLogin: React.FC = () => {
         <div className={styles.fieldGroup}>
           <label className={styles.label}>Password</label>
 
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
           />
         </div>
         <div style={{ marginBottom: '1rem' }}>
           <label>Password</label>
-<<<<<<< HEAD
-          <input
-=======
-       <input
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
+
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
             required
-<<<<<<< HEAD
-=======
 
             className={styles.input}
           />
@@ -94,15 +82,11 @@ const RiderLogin: React.FC = () => {
         {error && <p className={styles.error}>{error}</p>}
         <button type="submit" disabled={loading} className={styles.button}>
 
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
           />
         </div>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <button type="submit" disabled={loading}>
-<<<<<<< HEAD
-=======
 
->>>>>>> 5b0e9ceaf6370e9bede2fdda4917e351f1be8c85
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
