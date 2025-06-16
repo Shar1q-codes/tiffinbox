@@ -4,6 +4,10 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../../firebase/config'
 import { createRiderProfile } from '../../services/firestore'
 
+import styles from './RiderSignup.module.css'
+
+
+
 const RiderSignup: React.FC = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
@@ -46,26 +50,49 @@ const RiderSignup: React.FC = () => {
   }
 
   return (
+
+    <div className={styles.authContainer}>
+      <h1>Rider Signup</h1>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Name</label>
+
     <div style={{ padding: '2rem' }}>
       <h1>Rider Signup</h1>
       <form onSubmit={handleSubmit} style={{ maxWidth: '400px' }}>
         <div style={{ marginBottom: '1rem' }}>
           <label>Name</label>
+
           <input
             name="name"
             value={formData.name}
             onChange={handleChange}
             required
+
+            className={styles.input}
+          />
+        </div>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Email</label>
+
           />
         </div>
         <div style={{ marginBottom: '1rem' }}>
           <label>Email</label>
+
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             required
+
+            className={styles.input}
+          />
+        </div>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Password</label>
+
           />
         </div>
         <div style={{ marginBottom: '1rem' }}>
@@ -76,10 +103,18 @@ const RiderSignup: React.FC = () => {
             value={formData.password}
             onChange={handleChange}
             required
+
+            className={styles.input}
+          />
+        </div>
+        {error && <p className={styles.error}>{error}</p>}
+        <button type="submit" disabled={loading} className={styles.button}>
+
           />
         </div>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <button type="submit" disabled={loading}>
+
           {loading ? 'Signing up...' : 'Sign Up'}
         </button>
       </form>
