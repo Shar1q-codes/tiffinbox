@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { getRiders, updateRider, Rider } from '../../../services/firestore'
+
 import styles from './RiderApproval.module.css'
+
+
+
+
+
+import styles from './RiderApproval.module.css'
+
+
+
+
 
 const RiderApproval: React.FC = () => {
   const [riders, setRiders] = useState<Rider[]>([])
@@ -27,11 +38,22 @@ const RiderApproval: React.FC = () => {
   }
 
   return (
+
     <div className={styles.container}>
+
+    <div>
+
+
+    <div className={styles.container}>
+
+    <div>
+
+
       <h1>Unapproved Riders</h1>
       {riders.length === 0 ? (
         <p>All riders approved.</p>
       ) : (
+
         <ul className={styles.list}>
           {riders.map(r => (
             <li key={r.id} className={styles.listItem}>
@@ -42,6 +64,13 @@ const RiderApproval: React.FC = () => {
               >
                 Approve
               </button>
+
+        <ul>
+          {riders.map(r => (
+            <li key={r.id} style={{ marginBottom: '0.5rem' }}>
+              {r.name} ({r.email}){' '}
+              <button onClick={() => handleApprove(r.id!)}>Approve</button>
+
             </li>
           ))}
         </ul>
