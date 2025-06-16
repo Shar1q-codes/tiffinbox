@@ -1,0 +1,22 @@
+.container {
+  padding: 2rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+}
+
+.listItem {
+  margin-bottom: 0.5rem;
+}
+
+.button {
+  background: #d62828;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
