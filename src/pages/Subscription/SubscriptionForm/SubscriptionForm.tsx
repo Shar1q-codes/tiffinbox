@@ -156,7 +156,7 @@ const SubscriptionForm: React.FC = () => {
                 <h3 className={styles.trackingTitle}>📱 Your Tracking Code</h3>
                 <div className={styles.trackingCode}>{trackingToken}</div>
                 <p className={styles.trackingNote}>
-                  Save this code to track your delivery. We've also sent it to your email and SMS.
+                  Save this code to track your delivery. We've also sent it to your email.
                 </p>
               </div>
             </div>
