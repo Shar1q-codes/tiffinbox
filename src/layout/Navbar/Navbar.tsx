@@ -67,8 +67,28 @@ const Navbar: React.FC = () => {
                 `${styles.loginButton} ${isActive ? styles.active : ''}`
               }
             >
-              Login
+              Admin
             </NavLink>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <NavLink
+                to="/rider/login"
+                className={({ isActive }) =>
+                  `${styles.loginButton} ${isActive ? styles.active : ''}`
+                }
+                style={{ background: '#3b82f6' }}
+              >
+                Rider Login
+              </NavLink>
+              <NavLink
+                to="/rider/signup"
+                className={({ isActive }) =>
+                  `${styles.loginButton} ${isActive ? styles.active : ''}`
+                }
+                style={{ background: '#10b981' }}
+              >
+                Become a Rider
+              </NavLink>
+            </div>
           </div>
         </div>
 
@@ -111,7 +131,27 @@ const Navbar: React.FC = () => {
               }
               onClick={closeMobileMenu}
             >
-              Login
+              Admin Login
+            </NavLink>
+            <NavLink
+              to="/rider/login"
+              className={({ isActive }) =>
+                `${styles.mobileLoginButton} ${isActive ? styles.active : ''}`
+              }
+              onClick={closeMobileMenu}
+              style={{ marginTop: '10px', background: '#3b82f6' }}
+            >
+              Rider Login
+            </NavLink>
+            <NavLink
+              to="/rider/signup"
+              className={({ isActive }) =>
+                `${styles.mobileLoginButton} ${isActive ? styles.active : ''}`
+              }
+              onClick={closeMobileMenu}
+              style={{ marginTop: '10px', background: '#10b981' }}
+            >
+              Become a Rider
             </NavLink>
           </div>
         </div>

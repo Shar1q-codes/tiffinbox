@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { getCustomers, getMenuItems, getDeliveryStatuses } from '../../../services/firestore'
+import { getCustomers, getMenuItems, getDeliveryStatuses, getDeliveryPartners } from '../../../services/firestore'
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState({
     totalCustomers: 0,
     totalMenuItems: 0,
     todaysOrders: 0,
-    activeDeliveries: 0
+    activeDeliveries: 0,
+    totalPartners: 0,
+    activePartners: 0
   })
   const [loading, setLoading] = useState(true)
 
@@ -18,17 +20,20 @@ const AdminDashboard: React.FC = () => {
     try {
       setLoading(true)
       
-      const [customers, menuItems, deliveryStatuses] = await Promise.all([
+      const [customers, menuItems, deliveryStatuses, deliveryPartners] = await Promise.all([
         getCustomers(),
         getMenuItems(),
-        getDeliveryStatuses()
+        getDeliveryStatuses(),
+        getDeliveryPartners()
       ])
 
       setStats({
         totalCustomers: customers.length,
         totalMenuItems: menuItems.length,
         todaysOrders: deliveryStatuses.length,
-        activeDeliveries: deliveryStatuses.filter(d => d.status !== 'delivered').length
+        activeDeliveries: deliveryStatuses.filter(d => d.status !== 'delivered').length,
+        totalPartners: deliveryPartners.length,
+        activePartners: deliveryPartners.filter(p => p.isActive).length
       })
     } catch (error) {
       console.error('Error loading dashboard stats:', error)
@@ -170,6 +175,22 @@ const AdminDashboard: React.FC = () => {
             {stats.totalMenuItems}
           </p>
         </div>
+
+        <div style={{
+          background: '#fef6e4',
+          border: '1px solid rgba(214, 40, 40, 0.1)',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏍️</div>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#2b2b2b', margin: '0 0 0.5rem 0' }}>
+            Delivery Partners
+          </h3>
+          <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#d62828', margin: '0' }}>
+            {stats.activePartners}/{stats.totalPartners}
+          </p>
+        </div>
       </div>
       
       <div style={{
@@ -227,6 +248,21 @@ const AdminDashboard: React.FC = () => {
             onClick={() => window.location.href = '/admin/delivery'}
           >
             🚚 Manage Deliveries & Send Emails
+          </button>
+          <button 
+            style={{
+              background: '#d62828',
+              color: '#ffffff',
+              border: 'none',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '500'
+            }}
+            onClick={() => window.location.href = '/admin/partners'}
+          >
+            🏍️ Manage Partners
           </button>
         </div>
       </div>
@@ -301,6 +337,30 @@ const AdminDashboard: React.FC = () => {
               Customers can track their orders using unique tracking codes. Live updates when delivery status changes.
             </p>
           </div>
+
+          <div style={{
+            background: 'rgba(139, 69, 19, 0.1)',
+            border: '1px solid #8b4513',
+            borderRadius: '8px',
+            padding: '1rem'
+          }}>
+            <h4 style={{ 
+              fontSize: '1rem', 
+              fontWeight: '600', 
+              margin: '0 0 0.5rem 0',
+              color: '#2b2b2b'
+            }}>
+              🏍️ Delivery Partners
+            </h4>
+            <p style={{ 
+              fontSize: '0.9rem', 
+              margin: '0',
+              color: '#2b2b2b',
+              opacity: 0.8
+            }}>
+              Manage your delivery team, track performance, and assign orders to partners efficiently.
+            </p>
+          </div>
         </div>
 
         <div style={{
@@ -311,7 +371,8 @@ const AdminDashboard: React.FC = () => {
           color: '#2b2b2b'
         }}>
           <strong>🔄 How it works:</strong> When you change delivery status in the Delivery Management section, 
-          customers automatically receive email notifications with their tracking code and updated delivery information.
+          customers automatically receive email notifications with their tracking code and updated delivery information. 
+          You can also manage your delivery partners to ensure efficient order fulfillment.
         </div>
       </div>
       
@@ -322,8 +383,8 @@ const AdminDashboard: React.FC = () => {
         fontFamily: 'Poppins, sans-serif',
         lineHeight: '1.6'
       }}>
-        Your TiffinBox admin dashboard is now connected to Firebase with email notification capabilities! 
-        All customer data is stored securely, and customers receive real-time updates via email. 
+        Your TiffinBox admin dashboard is now connected to Firebase with email notification capabilities and delivery partner management! 
+        All customer data is stored securely, customers receive real-time updates via email, and you can efficiently manage your delivery team. 
         Use the Delivery Management section to update order statuses and automatically notify customers.
       </p>
     </div>

@@ -1,16 +1,17 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../contexts/AuthContext'
-import styles from './AdminLogin.module.css'
+import { Link, useNavigate } from 'react-router-dom'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../../../firebase/config'
+import { getRiderByEmail } from '../../../services/riderService'
+import styles from './RiderLogin.module.css'
 
 interface LoginFormData {
   email: string
   password: string
 }
 
-const AdminLogin: React.FC = () => {
+const RiderLogin: React.FC = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -31,7 +32,7 @@ const AdminLogin: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Basic validation - prevent submission if fields are empty
+    // Basic validation
     if (!formData.email.trim() || !formData.password.trim()) {
       setErrorMessage('Please fill in all fields')
       return
@@ -42,14 +43,30 @@ const AdminLogin: React.FC = () => {
       return
     }
 
-    // Only set loading state if validation passes
     setIsLoading(true)
     setErrorMessage('')
 
     try {
-      await login(formData.email, formData.password)
-      console.log('Login successful!')
-      navigate('/admin/dashboard')
+      // First check if the user is a registered rider
+      const rider = await getRiderByEmail(formData.email)
+      
+      if (!rider) {
+        setErrorMessage('You are not registered as a delivery partner. Please contact admin.')
+        setIsLoading(false)
+        return
+      }
+
+      if (!rider.isActive) {
+        setErrorMessage('Your account is inactive. Please contact admin.')
+        setIsLoading(false)
+        return
+      }
+
+      // Authenticate with Firebase
+      await signInWithEmailAndPassword(auth, formData.email, formData.password)
+      
+      console.log('Rider login successful!')
+      navigate('/rider/dashboard')
     } catch (error: any) {
       console.error('Login error:', error)
       
@@ -72,22 +89,21 @@ const AdminLogin: React.FC = () => {
     }
   }
 
-  // Form is valid only if both fields have content (not just whitespace)
   const isFormValid = formData.email.trim().length > 0 && formData.password.trim().length > 0
 
   return (
-    <div className={styles.adminLogin}>
+    <div className={styles.riderLogin}>
       <div className={styles.container}>
         <div className={styles.loginCard}>
           {/* Header */}
           <div className={styles.header}>
             <div className={styles.logo}>
-              <div className={styles.logoIcon}>🔐</div>
-              <h1 className={styles.logoText}>TiffinBox Admin</h1>
+              <div className={styles.logoIcon}>🏍️</div>
+              <h1 className={styles.logoText}>TiffinBox Rider</h1>
             </div>
             <p className={styles.tagline}>
-              <span className={styles.taglineIcon}>🧑‍🍳</span>
-              Staff Only
+              <span className={styles.taglineIcon}>🚚</span>
+              Delivery Partner Portal
             </p>
           </div>
 
@@ -106,7 +122,7 @@ const AdminLogin: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className={styles.fieldInput}
-                placeholder="Enter your admin email"
+                placeholder="Enter your registered email"
                 required
                 disabled={isLoading}
               />
@@ -152,7 +168,7 @@ const AdminLogin: React.FC = () => {
           {/* Footer */}
           <div className={styles.footer}>
             <p className={styles.footerText}>
-              Secure admin access for TiffinBox staff
+              Don't have an account? <Link to="/rider/signup" style={{ color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>Sign up</Link>
             </p>
           </div>
         </div>
@@ -161,4 +177,4 @@ const AdminLogin: React.FC = () => {
   )
 }
 
-export default AdminLogin
+export default RiderLogin

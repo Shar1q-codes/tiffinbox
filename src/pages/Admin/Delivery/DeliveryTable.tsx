@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import {
-  getDeliveryStatuses,
+import { 
+  getDeliveryStatuses, 
   updateDeliveryStatus,
+  getDeliveryPartners,
   DeliveryStatus,
-  getApprovedRiders,
-  Rider
+  DeliveryPartner 
 } from '../../../services/firestore'
 import styles from './DeliveryTable.module.css'
 
@@ -13,17 +13,13 @@ type SortOrder = 'asc' | 'desc'
 
 const DeliveryTable: React.FC = () => {
   const [orders, setOrders] = useState<DeliveryStatus[]>([])
+  const [deliveryPartners, setDeliveryPartners] = useState<DeliveryPartner[]>([])
   const [partnerFilter, setPartnerFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortField, setSortField] = useState<SortField>('lastUpdated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [isLoading, setIsLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
-
-  // Delivery partners list loaded from Firestore
-  const [deliveryPartners, setDeliveryPartners] = useState<Rider[]>([
-    { id: 'unassigned', name: 'Unassigned', email: '', approved: true }
-  ])
 
   // Status options
   const statusOptions = [
@@ -33,33 +29,33 @@ const DeliveryTable: React.FC = () => {
     { value: 'delivered', label: 'Delivered', icon: '✅' }
   ]
 
-  // Load delivery statuses from Firestore
+  // Load delivery statuses and partners from Firestore
   useEffect(() => {
-    loadDeliveryStatuses()
-    loadRiders()
+    loadData()
   }, [])
 
-  const loadDeliveryStatuses = async () => {
+  const loadData = async () => {
     try {
       setIsLoading(true)
-      const deliveryData = await getDeliveryStatuses()
+      const [deliveryData, partnersData] = await Promise.all([
+        getDeliveryStatuses(),
+        getDeliveryPartners()
+      ])
       setOrders(deliveryData)
+      setDeliveryPartners(partnersData)
     } catch (error) {
-      console.error('Error loading delivery statuses:', error)
+      console.error('Error loading data:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const loadRiders = async () => {
+  const loadDeliveryStatuses = async () => {
     try {
-      const riders = await getApprovedRiders()
-      setDeliveryPartners([
-        { id: 'unassigned', name: 'Unassigned', email: '', approved: true },
-        ...riders
-      ])
+      const deliveryData = await getDeliveryStatuses()
+      setOrders(deliveryData)
     } catch (error) {
-      console.error('Error loading riders:', error)
+      console.error('Error loading delivery statuses:', error)
     }
   }
 
@@ -181,8 +177,9 @@ const DeliveryTable: React.FC = () => {
   }
 
   const getPartnerName = (partnerId: string) => {
+    if (partnerId === 'unassigned') return 'Unassigned'
     const partner = deliveryPartners.find(p => p.id === partnerId)
-    return partner?.name || 'Unassigned'
+    return partner?.name || partnerId
   }
 
   const getStatusInfo = (status: DeliveryStatus['status']) => {
@@ -196,7 +193,7 @@ const DeliveryTable: React.FC = () => {
         <div className={styles.header}>
           <h1 className={styles.title}>Delivery Management 🚚</h1>
           <p className={styles.subtitle}>
-            Loading delivery orders...
+            Loading delivery orders and partners...
           </p>
         </div>
       </div>
@@ -269,6 +266,11 @@ const DeliveryTable: React.FC = () => {
             <div className={styles.summaryValue}>{stats.unassigned}</div>
             <div className={styles.summaryLabel}>Unassigned</div>
           </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryIcon}>🏍️</span>
+            <div className={styles.summaryValue}>{deliveryPartners.filter(p => p.isActive).length}</div>
+            <div className={styles.summaryLabel}>Active Partners</div>
+          </div>
         </div>
       </div>
 
@@ -286,11 +288,14 @@ const DeliveryTable: React.FC = () => {
               className={styles.filterSelect}
             >
               <option value="all">All Partners</option>
-              {deliveryPartners.map(partner => (
-                <option key={partner.id} value={partner.id}>
-                  {partner.name}
-                </option>
-              ))}
+              <option value="unassigned">Unassigned</option>
+              {deliveryPartners
+                .filter(partner => partner.isActive)
+                .map(partner => (
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -396,11 +401,15 @@ const DeliveryTable: React.FC = () => {
                         onChange={(e) => handlePartnerChange(order.id!, e.target.value)}
                         className={`${styles.partnerSelect} ${order.assignedPartner === 'unassigned' ? styles.unassigned : styles.assigned}`}
                       >
-                        {deliveryPartners.map(partner => (
-                          <option key={partner.id} value={partner.id}>
-                            {partner.name}
-                          </option>
-                        ))}
+                        <option value="unassigned">Unassigned</option>
+                        {deliveryPartners
+                          .filter(partner => partner.isActive)
+                          .map(partner => (
+                            <option key={partner.id} value={partner.id}>
+                              {partner.name} ({partner.vehicleType === 'bike' ? '🏍️' : 
+                                              partner.vehicleType === 'scooter' ? '🛵' : '🚗'})
+                            </option>
+                          ))}
                       </select>
                     </td>
                     <td className={styles.tableCell}>
@@ -514,11 +523,15 @@ const DeliveryTable: React.FC = () => {
                           onChange={(e) => handlePartnerChange(order.id!, e.target.value)}
                           className={styles.cardSelect}
                         >
-                          {deliveryPartners.map(partner => (
-                            <option key={partner.id} value={partner.id}>
-                              {partner.name}
-                            </option>
-                          ))}
+                          <option value="unassigned">Unassigned</option>
+                          {deliveryPartners
+                            .filter(partner => partner.isActive)
+                            .map(partner => (
+                              <option key={partner.id} value={partner.id}>
+                                {partner.name} ({partner.vehicleType === 'bike' ? '🏍️' : 
+                                                partner.vehicleType === 'scooter' ? '🛵' : '🚗'})
+                              </option>
+                            ))}
                         </select>
                       </div>
                       

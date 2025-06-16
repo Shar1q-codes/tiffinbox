@@ -1,6 +1,6 @@
-.adminLogin {
+.riderSignup {
   min-height: 100vh;
-  background: #f5ebe0;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,14 +10,14 @@
   overflow: hidden;
 }
 
-.adminLogin::before {
+.riderSignup::before {
   content: '';
   position: absolute;
   top: -20%;
   right: -20%;
   width: 40%;
   height: 140%;
-  background: rgba(214, 40, 40, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 50%;
   z-index: 1;
 }
@@ -26,15 +26,15 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 450px;
+  max-width: 600px;
 }
 
-/* Login Card */
-.loginCard {
+/* Signup Card */
+.signupCard {
   background: #ffffff;
   border-radius: 20px;
-  padding: 3rem 2.5rem;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
   border: 2px solid transparent;
   transition: all 0.3s ease;
   opacity: 0;
@@ -53,16 +53,16 @@
   }
 }
 
-.loginCard:hover {
-  border-color: rgba(214, 40, 40, 0.2);
-  box-shadow: 0 12px 50px rgba(214, 40, 40, 0.15);
+.signupCard:hover {
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 12px 50px rgba(59, 130, 246, 0.15);
   transform: translateY(-2px);
 }
 
 /* Header */
 .header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .logo {
@@ -75,14 +75,14 @@
 
 .logoIcon {
   font-size: 2rem;
-  background: #d62828;
+  background: #3b82f6;
   width: 50px;
   height: 50px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(214, 40, 40, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .logoText {
@@ -95,7 +95,7 @@
 .tagline {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #d62828;
+  color: #3b82f6;
   opacity: 0.8;
   font-family: 'Poppins', sans-serif;
   display: flex;
@@ -109,9 +109,15 @@
 }
 
 /* Form */
-.loginForm {
+.signupForm {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
 }
 
@@ -121,8 +127,12 @@
   gap: 0.5rem;
 }
 
+.fieldGroup.fullWidth {
+  grid-column: 1 / -1;
+}
+
 .fieldLabel {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #2b2b2b;
   font-family: 'Poppins', sans-serif;
@@ -136,12 +146,13 @@
   opacity: 0.7;
 }
 
-.fieldInput {
-  background: #f5ebe0;
+.fieldInput,
+.fieldSelect {
+  background: #f8fafc;
   border: 2px solid transparent;
   border-radius: 12px;
-  padding: 1rem 1.25rem;
-  font-size: 1rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 0.95rem;
   font-weight: 400;
   color: #2b2b2b;
   font-family: 'Poppins', sans-serif;
@@ -150,16 +161,56 @@
   box-sizing: border-box;
 }
 
-.fieldInput:focus {
+.fieldInput:focus,
+.fieldSelect:focus {
   outline: none;
-  border-color: #d62828;
+  border-color: #3b82f6;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(214, 40, 40, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.fieldInput::placeholder {
+.fieldInput::placeholder,
+.fieldSelect::placeholder {
   color: #2b2b2b;
   opacity: 0.5;
+}
+
+.passwordRequirements {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.termsGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+  margin-top: 0.2rem;
+}
+
+.termsText {
+  font-size: 0.85rem;
+  color: #2b2b2b;
+  line-height: 1.5;
+  font-family: 'Poppins', sans-serif;
+}
+
+.termsLink {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.termsLink:hover {
+  text-decoration: underline;
 }
 
 /* Error Message */
@@ -196,7 +247,7 @@
 
 /* Submit Button */
 .submitButton {
-  background: #d62828;
+  background: #3b82f6;
   color: #ffffff;
   border: none;
   border-radius: 12px;
@@ -232,9 +283,9 @@
 }
 
 .submitButton:hover:not(:disabled) {
-  background: #b91c1c;
+  background: #2563eb;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(214, 40, 40, 0.4);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
 }
 
 .submitButton:disabled {
@@ -251,7 +302,7 @@
 
 /* Loading State */
 .submitButton:disabled:not(.error) {
-  background: #d62828;
+  background: #3b82f6;
   opacity: 0.7;
   cursor: wait;
 }
@@ -280,25 +331,56 @@
   text-align: center;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #f5ebe0;
+  border-top: 1px solid #f8fafc;
 }
 
-.footerText {
-  font-size: 0.85rem;
-  font-weight: 400;
+.loginLink {
+  font-size: 0.9rem;
   color: #2b2b2b;
-  opacity: 0.6;
   font-family: 'Poppins', sans-serif;
+}
+
+.loginLinkText {
+  color: #3b82f6;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.loginLinkText:hover {
+  text-decoration: underline;
+}
+
+/* Success Message */
+.successMessage {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  color: #059669;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+.successIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .adminLogin {
+  .riderSignup {
     padding: 1.5rem 1rem;
   }
   
-  .loginCard {
-    padding: 2.5rem 2rem;
+  .signupCard {
+    padding: 2rem;
   }
   
   .logoText {
@@ -315,9 +397,15 @@
     font-size: 0.85rem;
   }
   
-  .fieldInput {
-    padding: 0.9rem 1rem;
-    font-size: 0.95rem;
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .fieldInput,
+  .fieldSelect {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
   }
   
   .submitButton {
@@ -327,7 +415,7 @@
 }
 
 @media (max-width: 480px) {
-  .adminLogin {
+  .riderSignup {
     padding: 1rem 0.5rem;
   }
   
@@ -335,8 +423,8 @@
     max-width: 100%;
   }
   
-  .loginCard {
-    padding: 2rem 1.5rem;
+  .signupCard {
+    padding: 1.5rem;
   }
   
   .logoText {
@@ -354,12 +442,13 @@
   }
   
   .fieldLabel {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
   }
   
-  .fieldInput {
-    padding: 0.8rem 0.9rem;
-    font-size: 0.9rem;
+  .fieldInput,
+  .fieldSelect {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
   }
   
   .submitButton {
@@ -367,7 +456,8 @@
     font-size: 0.95rem;
   }
   
-  .errorMessage {
+  .errorMessage,
+  .successMessage {
     font-size: 0.85rem;
     padding: 0.6rem 0.8rem;
   }
@@ -375,8 +465,9 @@
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .loginCard,
+  .signupCard,
   .fieldInput,
+  .fieldSelect,
   .submitButton {
     border: 2px solid currentColor;
   }
@@ -384,22 +475,27 @@
   .errorMessage {
     border: 2px solid #dc2626;
   }
+  
+  .successMessage {
+    border: 2px solid #059669;
+  }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .loginCard {
+  .signupCard {
     animation: none;
     opacity: 1;
     transform: none;
   }
   
   .fieldInput,
+  .fieldSelect,
   .submitButton {
     transition: background-color 0.2s ease, border-color 0.2s ease;
   }
   
-  .loginCard:hover,
+  .signupCard:hover,
   .submitButton:hover {
     transform: none;
   }
@@ -408,23 +504,19 @@
     display: none;
   }
   
-  .errorMessage {
+  .errorMessage,
+  .successMessage {
     animation: none;
   }
 }
 
 /* Focus styles for accessibility */
 .fieldInput:focus,
-.submitButton:focus {
-  outline: 2px solid #d62828;
+.fieldSelect:focus,
+.submitButton:focus,
+.checkbox:focus,
+.termsLink:focus,
+.loginLinkText:focus {
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
-}
-
-/* Prevent scroll issues */
-.adminLogin {
-  box-sizing: border-box;
-}
-
-.adminLogin * {
-  box-sizing: border-box;
 }

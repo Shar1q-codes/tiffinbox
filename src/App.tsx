@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
+import RiderRoute from './components/RiderRoute'
 import GlasgowBanner from './components/GlasgowBanner/GlasgowBanner'
 import Navbar from './layout/Navbar/Navbar'
 import Home from './pages/Home/Home'
@@ -13,11 +14,10 @@ import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard'
 import MenuEditor from './pages/Admin/MenuEditor/MenuEditor'
 import CustomerTable from './pages/Admin/Customers/CustomerTable'
 import DeliveryTable from './pages/Admin/Delivery/DeliveryTable'
-import RiderLogin from './pages/Rider/RiderLogin'
-import RiderSignup from './pages/Rider/RiderSignup'
-import RiderDashboard from './pages/Rider/RiderDashboard'
-import RiderPrivateRoute from './components/RiderPrivateRoute'
-import RiderApproval from './pages/Admin/Riders/RiderApproval'
+import DeliveryPartners from './pages/Admin/DeliveryPartners/DeliveryPartners'
+import RiderLogin from './pages/Rider/Login/RiderLogin'
+import RiderSignup from './pages/Rider/Signup/RiderSignup'
+import RiderDashboard from './pages/Rider/Dashboard/RiderDashboard'
 
 function App() {
   return (
@@ -26,6 +26,17 @@ function App() {
         <Routes>
           {/* Admin login route (no layout) */}
           <Route path="/admin/login" element={<AdminLogin />} />
+          
+          {/* Rider login and signup routes (no layout) */}
+          <Route path="/rider/login" element={<RiderLogin />} />
+          <Route path="/rider/signup" element={<RiderSignup />} />
+          
+          {/* Rider dashboard route (with auth protection) */}
+          <Route path="/rider/dashboard" element={
+            <RiderRoute>
+              <RiderDashboard />
+            </RiderRoute>
+          } />
           
           {/* Admin routes (with admin layout and auth protection) */}
           <Route path="/admin/*" element={
@@ -37,18 +48,9 @@ function App() {
             <Route path="menu" element={<MenuEditor />} />
             <Route path="customers" element={<CustomerTable />} />
             <Route path="delivery" element={<DeliveryTable />} />
-            <Route path="riders" element={<RiderApproval />} />
+            <Route path="partners" element={<DeliveryPartners />} />
           </Route>
-
-          {/* Rider authentication */}
-          <Route path="/rider/login" element={<RiderLogin />} />
-          <Route path="/rider/signup" element={<RiderSignup />} />
-          <Route path="/rider/dashboard" element={
-            <RiderPrivateRoute>
-              <RiderDashboard />
-            </RiderPrivateRoute>
-          } />
-
+          
           {/* Main app routes (with navbar and Glasgow banner) */}
           <Route path="/*" element={
             <>

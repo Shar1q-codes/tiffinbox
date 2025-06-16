@@ -40,7 +40,7 @@ const AdminLayout: React.FC = () => {
     { path: '/admin/menu', label: 'Menu Editor', icon: '🍽️' },
     { path: '/admin/customers', label: 'Customers', icon: '👥' },
     { path: '/admin/delivery', label: 'Delivery & Notifications', icon: '🚚' },
-    { path: '/admin/riders', label: 'Riders', icon: '🧑‍✈️' }
+    { path: '/admin/partners', label: 'Delivery Partners', icon: '🏍️' }
   ]
 
   const toggleSidebar = () => {

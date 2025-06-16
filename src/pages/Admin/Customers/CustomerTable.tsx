@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { 
   getCustomers, 
   deleteCustomer,
+  updateCustomer,
   Customer 
 } from '../../../services/firestore'
 import styles from './CustomerTable.module.css'
@@ -21,6 +22,8 @@ const CustomerTable: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
   const [isLoading, setIsLoading] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<CustomerWithStatus | null>(null)
 
   // Load customers from Firestore
   useEffect(() => {
@@ -99,9 +102,11 @@ const CustomerTable: React.FC = () => {
   }, [customers])
 
   const handleEdit = (customerId: string) => {
-    console.log('Edit customer:', customerId)
-    // In a real app, this would open an edit modal or navigate to edit page
-    alert(`Edit customer functionality would be implemented here for customer ID: ${customerId}`)
+    const customer = customers.find(c => c.id === customerId)
+    if (customer) {
+      setEditingCustomer(customer)
+      setShowEditModal(true)
+    }
   }
 
   const handleDelete = async (customerId: string) => {
@@ -120,6 +125,44 @@ const CustomerTable: React.FC = () => {
     const [field, order] = e.target.value.split('-') as [SortField, SortOrder]
     setSortField(field)
     setSortOrder(order)
+  }
+
+  const handleUpdateCustomer = async (updatedCustomer: CustomerWithStatus) => {
+    try {
+      if (!updatedCustomer.id) return
+      
+      // Extract fields that can be updated
+      const { name, email, phone, address, deliverySlot, planType } = updatedCustomer
+      
+      await updateCustomer(updatedCustomer.id, {
+        name, email, phone, address, deliverySlot, planType
+      })
+      
+      setShowEditModal(false)
+      setEditingCustomer(null)
+      await loadCustomers()
+      
+      alert('✅ Customer updated successfully!')
+    } catch (error) {
+      console.error('Error updating customer:', error)
+      alert('❌ Failed to update customer. Please try again.')
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    
+    if (editingCustomer) {
+      setEditingCustomer({
+        ...editingCustomer,
+        [name]: value
+      })
+    }
+  }
+
+  const handleCloseModal = () => {
+    setShowEditModal(false)
+    setEditingCustomer(null)
   }
 
   if (isLoading) {
@@ -372,6 +415,120 @@ const CustomerTable: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Edit Customer Modal */}
+      {showEditModal && editingCustomer && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Edit Customer</h3>
+              <button 
+                className={styles.closeButton}
+                onClick={handleCloseModal}
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="name" className={styles.formLabel}>Full Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={editingCustomer.name}
+                    onChange={handleInputChange}
+                    className={styles.formInput}
+                    required
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="email" className={styles.formLabel}>Email Address</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={editingCustomer.email}
+                    onChange={handleInputChange}
+                    className={styles.formInput}
+                    required
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="phone" className={styles.formLabel}>Phone Number</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={editingCustomer.phone}
+                    onChange={handleInputChange}
+                    className={styles.formInput}
+                    required
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="deliverySlot" className={styles.formLabel}>Delivery Slot</label>
+                  <select
+                    id="deliverySlot"
+                    name="deliverySlot"
+                    value={editingCustomer.deliverySlot}
+                    onChange={handleInputChange}
+                    className={styles.formSelect}
+                    required
+                  >
+                    <option value="18:00">6:00 PM</option>
+                    <option value="19:00">7:00 PM</option>
+                    <option value="20:00">8:00 PM</option>
+                    <option value="21:00">9:00 PM</option>
+                    <option value="22:00">10:00 PM</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="planType" className={styles.formLabel}>Plan Type</label>
+                  <select
+                    id="planType"
+                    name="planType"
+                    value={editingCustomer.planType}
+                    onChange={handleInputChange}
+                    className={styles.formSelect}
+                    required
+                  >
+                    <option value="veg">Vegetarian</option>
+                    <option value="non-veg">Non-Vegetarian</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label htmlFor="address" className={styles.formLabel}>Delivery Address</label>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={editingCustomer.address}
+                    onChange={handleInputChange}
+                    className={styles.formInput}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button 
+                className={styles.cancelButton}
+                onClick={handleCloseModal}
+              >
+                Cancel
+              </button>
+              <button 
+                className={styles.saveButton}
+                onClick={() => handleUpdateCustomer(editingCustomer)}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

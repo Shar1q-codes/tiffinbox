@@ -474,6 +474,175 @@
   font-family: 'Poppins', sans-serif;
 }
 
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem;
+  animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideInModal 0.3s ease-out;
+}
+
+@keyframes slideInModal {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 2rem 1rem 2rem;
+  border-bottom: 1px solid #f5ebe0;
+}
+
+.modalTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #2b2b2b;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.closeButton {
+  background: #f5ebe0;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  color: #2b2b2b;
+}
+
+.closeButton:hover {
+  background: #d62828;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.modalBody {
+  padding: 1rem 2rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.formInput,
+.formSelect {
+  background: #f5ebe0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #2b2b2b;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.formInput:focus,
+.formSelect:focus {
+  outline: none;
+  border-color: #d62828;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(214, 40, 40, 0.1);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 2rem 2rem 2rem;
+  border-top: 1px solid #f5ebe0;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelButton {
+  background: #f5ebe0;
+  color: #d62828;
+  border: 2px solid #d62828;
+}
+
+.cancelButton:hover {
+  background: #d62828;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.saveButton {
+  background: #d62828;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 15px rgba(214, 40, 40, 0.3);
+}
+
+.saveButton:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(214, 40, 40, 0.4);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .controlsGrid {
@@ -541,6 +710,22 @@
   .mobileCards {
     display: flex;
   }
+  
+  .modalContent {
+    width: 90%;
+    margin: 0 1rem;
+  }
+  
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
@@ -607,6 +792,28 @@
     height: 28px;
     font-size: 0.8rem;
   }
+  
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .modalTitle {
+    font-size: 1.2rem;
+  }
+  
+  .modalFooter {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .cancelButton,
+  .saveButton {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* High contrast mode support */
@@ -614,14 +821,19 @@
   .tableContainer,
   .controlsSection,
   .statsCard,
-  .customerCard {
+  .customerCard,
+  .modalContent {
     border: 2px solid #2b2b2b;
   }
   
   .actionButton,
   .searchInput,
   .filterSelect,
-  .sortSelect {
+  .sortSelect,
+  .formInput,
+  .formSelect,
+  .cancelButton,
+  .saveButton {
     border: 2px solid currentColor;
   }
   
@@ -636,17 +848,29 @@
   .statsCard,
   .customerCard,
   .tableRow,
-  .actionButton {
+  .actionButton,
+  .modalContent,
+  .closeButton,
+  .cancelButton,
+  .saveButton {
     transition: background-color 0.2s ease, border-color 0.2s ease;
   }
   
   .statsCard:hover,
   .customerCard:hover,
-  .actionButton:hover {
+  .actionButton:hover,
+  .closeButton:hover,
+  .cancelButton:hover,
+  .saveButton:hover {
     transform: none;
   }
   
   .loadingIcon {
+    animation: none;
+  }
+  
+  .modalOverlay,
+  .modalContent {
     animation: none;
   }
 }
@@ -655,36 +879,12 @@
 .searchInput:focus,
 .filterSelect:focus,
 .sortSelect:focus,
-.actionButton:focus {
+.actionButton:focus,
+.formInput:focus,
+.formSelect:focus,
+.closeButton:focus,
+.cancelButton:focus,
+.saveButton:focus {
   outline: 2px solid #d62828;
   outline-offset: 2px;
-}
-
-/* Scrollbar styling for table */
-.tableContainer::-webkit-scrollbar {
-  height: 8px;
-}
-
-.tableContainer::-webkit-scrollbar-track {
-  background: #f5ebe0;
-}
-
-.tableContainer::-webkit-scrollbar-thumb {
-  background: rgba(214, 40, 40, 0.3);
-  border-radius: 4px;
-}
-
-.tableContainer::-webkit-scrollbar-thumb:hover {
-  background: rgba(214, 40, 40, 0.5);
-}
-
-/* Table responsive scroll */
-@media (min-width: 769px) {
-  .tableContainer {
-    overflow-x: auto;
-  }
-  
-  .table {
-    min-width: 800px;
-  }
 }

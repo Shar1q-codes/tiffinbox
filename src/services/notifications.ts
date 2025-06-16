@@ -126,6 +126,100 @@ The TiffinBox Team`
   }
 }
 
+// Send OTP to customer for delivery confirmation
+export const sendDeliveryOTP = async (
+  customerEmail: string,
+  customerName: string,
+  otp: string,
+  orderId: string
+): Promise<boolean> => {
+  try {
+    const templateParams = {
+      to_name: customerName,
+      to_email: customerEmail,
+      tracking_code: otp,
+      order_id: orderId,
+      message: `Dear ${customerName},
+
+🚚 Your TiffinBox delivery partner is on the way!
+
+📱 DELIVERY CONFIRMATION OTP: ${otp}
+
+🏠 When the delivery partner arrives at your location, please provide this OTP to confirm receipt of your order.
+
+📋 Order ID: ${orderId}
+
+⚠️ IMPORTANT: Only share this OTP with the TiffinBox delivery partner when they arrive at your doorstep.
+
+Need help? Contact us at +44 7XXX XXXXXX
+
+Best regards,
+The TiffinBox Team`
+    }
+
+    const emailResponse = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      templateParams
+    )
+
+    console.log('OTP email sent successfully:', emailResponse.status)
+    return true
+  } catch (error) {
+    console.error('Failed to send OTP email:', error)
+    return false
+  }
+}
+
+// Send delivery completion confirmation
+export const sendDeliveryCompletion = async (
+  customerEmail: string,
+  customerName: string,
+  trackingToken: string,
+  otp: string
+): Promise<boolean> => {
+  try {
+    const templateParams = {
+      to_name: customerName,
+      to_email: customerEmail,
+      tracking_code: trackingToken,
+      order_id: otp,
+      message: `Dear ${customerName},
+
+🎉 Your TiffinBox order has been successfully delivered!
+
+✅ DELIVERY CONFIRMED with OTP: ${otp}
+📱 TRACKING CODE: ${trackingToken}
+🕒 DELIVERED AT: ${new Date().toLocaleString()}
+
+We hope you enjoy your delicious, home-cooked meal! 🍱
+
+📝 FEEDBACK: We'd love to hear about your experience. Reply to this email with your feedback.
+
+🔄 NEXT DELIVERY: Your next tiffin will be prepared and delivered according to your subscription schedule.
+
+Need help? Contact us at +44 7XXX XXXXXX
+
+Thank you for choosing TiffinBox - Home on your plate! ❤️
+
+Best regards,
+The TiffinBox Team`
+    }
+
+    const emailResponse = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      templateParams
+    )
+
+    console.log('Delivery completion email sent successfully:', emailResponse.status)
+    return true
+  } catch (error) {
+    console.error('Failed to send delivery completion email:', error)
+    return false
+  }
+}
+
 // Test email function (for development)
 export const sendTestEmail = async (testEmail: string): Promise<boolean> => {
   try {

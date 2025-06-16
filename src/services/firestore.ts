@@ -1,11 +1,10 @@
 import { 
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  setDoc,
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
   query, 
   where, 
   orderBy,
@@ -48,6 +47,22 @@ export interface MenuItem {
   category: 'veg' | 'non-veg'
   isSpecial: boolean
   image?: string
+}
+
+// Delivery Partner interface
+export interface DeliveryPartner {
+  id?: string
+  name: string
+  phone: string
+  email: string
+  vehicleType: 'bike' | 'car' | 'scooter'
+  vehicleNumber: string
+  isActive: boolean
+  currentOrders: number
+  totalDeliveries: number
+  rating: number
+  joinedDate: Timestamp
+  lastActive: Timestamp
 }
 
 // Delivery Status interface
@@ -167,6 +182,106 @@ export const deleteCustomer = async (id: string) => {
     await deleteDoc(doc(db, 'customers', id))
   } catch (error) {
     console.error('Error deleting customer:', error)
+    throw error
+  }
+}
+
+// Delivery Partner operations
+export const addDeliveryPartner = async (partnerData: Omit<DeliveryPartner, 'id' | 'joinedDate' | 'lastActive' | 'currentOrders' | 'totalDeliveries' | 'rating'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'deliveryPartners'), {
+      ...partnerData,
+      currentOrders: 0,
+      totalDeliveries: 0,
+      rating: 5.0,
+      joinedDate: Timestamp.now(),
+      lastActive: Timestamp.now()
+    })
+    return docRef.id
+  } catch (error) {
+    console.error('Error adding delivery partner:', error)
+    throw error
+  }
+}
+
+export const getDeliveryPartners = async (): Promise<DeliveryPartner[]> => {
+  try {
+    const q = query(
+      collection(db, 'deliveryPartners'), 
+      where('isActive', '==', true),
+      orderBy('name', 'asc')
+    )
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as DeliveryPartner))
+  } catch (error) {
+    console.error('Error getting delivery partners:', error)
+    throw error
+  }
+}
+
+// Get pending rider applications - Modified to avoid composite index requirement
+export const getPendingRiders = async (): Promise<DeliveryPartner[]> => {
+  try {
+    // Query only by isActive to avoid composite index requirement
+    const q = query(
+      collection(db, 'deliveryPartners'), 
+      where('isActive', '==', false)
+    )
+    const querySnapshot = await getDocs(q)
+    
+    // Sort by joinedDate client-side instead of server-side
+    const riders = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as DeliveryPartner))
+    
+    // Sort by joinedDate descending (most recent first)
+    return riders.sort((a, b) => {
+      const aTime = a.joinedDate?.toMillis() || 0
+      const bTime = b.joinedDate?.toMillis() || 0
+      return bTime - aTime
+    })
+  } catch (error) {
+    console.error('Error getting pending riders:', error)
+    throw error
+  }
+}
+
+// Approve rider application
+export const approveRider = async (riderId: string): Promise<void> => {
+  try {
+    const riderRef = doc(db, 'deliveryPartners', riderId)
+    await updateDoc(riderRef, {
+      isActive: true,
+      lastActive: Timestamp.now()
+    })
+  } catch (error) {
+    console.error('Error approving rider:', error)
+    throw error
+  }
+}
+
+export const updateDeliveryPartner = async (id: string, data: Partial<DeliveryPartner>) => {
+  try {
+    const partnerRef = doc(db, 'deliveryPartners', id)
+    await updateDoc(partnerRef, {
+      ...data,
+      lastActive: Timestamp.now()
+    })
+  } catch (error) {
+    console.error('Error updating delivery partner:', error)
+    throw error
+  }
+}
+
+export const deleteDeliveryPartner = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'deliveryPartners', id))
+  } catch (error) {
+    console.error('Error deleting delivery partner:', error)
     throw error
   }
 }
@@ -438,50 +553,17 @@ export const subscribeToMenuItems = (
   })
 }
 
-// Rider interface
-export interface Rider {
-  id?: string
-  email: string
-  name: string
-  approved: boolean
-}
-
-// Create rider profile after signup
-export const createRiderProfile = async (
-  uid: string,
-  data: { email: string; name: string }
+// Real-time listeners for delivery partners
+export const subscribeToDeliveryPartners = (
+  callback: (partners: DeliveryPartner[]) => void
 ) => {
-  await setDoc(doc(db, 'riders', uid), {
-    email: data.email,
-    name: data.name,
-    approved: false
+  const q = query(collection(db, 'deliveryPartners'), orderBy('name', 'asc'))
+  
+  return onSnapshot(q, (querySnapshot) => {
+    const partners = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as DeliveryPartner))
+    callback(partners)
   })
-}
-
-// Get all riders
-export const getRiders = async (): Promise<Rider[]> => {
-  const snapshot = await getDocs(collection(db, 'riders'))
-  return snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  } as Rider))
-}
-
-// Get only approved riders
-export const getApprovedRiders = async (): Promise<Rider[]> => {
-  const q = query(collection(db, 'riders'), where('approved', '==', true))
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  } as Rider))
-}
-
-// Update rider document
-export const updateRider = async (
-  id: string,
-  data: Partial<Rider>
-) => {
-  const ref = doc(db, 'riders', id)
-  await updateDoc(ref, data)
 }
