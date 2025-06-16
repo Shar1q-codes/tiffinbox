@@ -142,7 +142,7 @@ const AdminLogin: React.FC = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className={styles.submitButton}
+              className={`${styles.submitButton} ${isLoading ? styles.loading : ''}`}
               disabled={!isFormValid || isLoading}
             >
               {isLoading ? 'Logging in...' : 'Login to Dashboard'}
