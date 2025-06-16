@@ -13,6 +13,11 @@ import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard'
 import MenuEditor from './pages/Admin/MenuEditor/MenuEditor'
 import CustomerTable from './pages/Admin/Customers/CustomerTable'
 import DeliveryTable from './pages/Admin/Delivery/DeliveryTable'
+import RiderLogin from './pages/Rider/RiderLogin'
+import RiderSignup from './pages/Rider/RiderSignup'
+import RiderDashboard from './pages/Rider/RiderDashboard'
+import RiderPrivateRoute from './components/RiderPrivateRoute'
+import RiderApproval from './pages/Admin/Riders/RiderApproval'
 
 function App() {
   return (
@@ -32,8 +37,18 @@ function App() {
             <Route path="menu" element={<MenuEditor />} />
             <Route path="customers" element={<CustomerTable />} />
             <Route path="delivery" element={<DeliveryTable />} />
+            <Route path="riders" element={<RiderApproval />} />
           </Route>
-          
+
+          {/* Rider authentication */}
+          <Route path="/rider/login" element={<RiderLogin />} />
+          <Route path="/rider/signup" element={<RiderSignup />} />
+          <Route path="/rider/dashboard" element={
+            <RiderPrivateRoute>
+              <RiderDashboard />
+            </RiderPrivateRoute>
+          } />
+
           {/* Main app routes (with navbar and Glasgow banner) */}
           <Route path="/*" element={
             <>
