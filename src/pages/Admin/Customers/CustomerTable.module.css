@@ -36,7 +36,7 @@
 
 .controlsGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 1rem;
   align-items: end;
 }
@@ -196,7 +196,52 @@
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
   border: none;
-  white-space: nowrap;
+}
+
+/* Column width definitions */
+.tableHeadCell:nth-child(1), 
+.tableCell:nth-child(1) {
+  width: 15%;
+}
+
+.tableHeadCell:nth-child(2), 
+.tableCell:nth-child(2) {
+  width: 15%;
+}
+
+.tableHeadCell:nth-child(3), 
+.tableCell:nth-child(3) {
+  width: 12%;
+}
+
+.tableHeadCell:nth-child(4), 
+.tableCell:nth-child(4) {
+  width: 8%;
+}
+
+.tableHeadCell:nth-child(5), 
+.tableCell:nth-child(5) {
+  width: 12%;
+}
+
+.tableHeadCell:nth-child(6), 
+.tableCell:nth-child(6) {
+  width: 10%;
+}
+
+.tableHeadCell:nth-child(7), 
+.tableCell:nth-child(7) {
+  width: 10%;
+}
+
+.tableHeadCell:nth-child(8), 
+.tableCell:nth-child(8) {
+  width: 8%;
+}
+
+.tableHeadCell:nth-child(9), 
+.tableCell:nth-child(9) {
+  width: 10%;
 }
 
 .tableBody {
@@ -233,6 +278,7 @@
 .customerEmail {
   color: #2b2b2b;
   opacity: 0.8;
+  overflow-wrap: break-word; /* Added to ensure long text wraps */
 }
 
 .customerPhone {
@@ -254,6 +300,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  /* Removed white-space: nowrap; to allow wrapping */
 }
 
 .typeIcon {
@@ -485,84 +532,63 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
-  padding: 2rem;
-  animation: fadeInOverlay 0.3s ease-out;
-}
-
-@keyframes fadeInOverlay {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  z-index: 1000;
+  padding: 1rem;
 }
 
 .modalContent {
   background: #ffffff;
-  border-radius: 20px;
-  max-width: 600px;
+  border-radius: 16px;
   width: 100%;
-  max-height: 80vh;
+  max-width: 600px;
+  max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideInModal 0.3s ease-out;
-}
-
-@keyframes slideInModal {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2);
 }
 
 .modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2rem 2rem 1rem 2rem;
+  padding: 1.5rem;
   border-bottom: 1px solid #f5ebe0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .modalTitle {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 600;
   color: #2b2b2b;
   margin: 0;
   font-family: 'Poppins', sans-serif;
 }
 
-.closeButton {
-  background: #f5ebe0;
+.modalClose {
+  background: transparent;
   border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
+  font-size: 1.2rem;
+  color: #2b2b2b;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  border-radius: 50%;
   transition: all 0.3s ease;
-  font-size: 1.2rem;
-  color: #2b2b2b;
 }
 
-.closeButton:hover {
-  background: #d62828;
-  color: #ffffff;
-  transform: scale(1.1);
+.modalClose:hover {
+  background: #f5ebe0;
 }
 
 .modalBody {
-  padding: 1rem 2rem;
+  padding: 1.5rem;
 }
 
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 .formGroup {
@@ -579,7 +605,7 @@
 }
 
 .formInput,
-.formSelect {
+.formTextarea {
   background: #f5ebe0;
   border: 2px solid transparent;
   border-radius: 8px;
@@ -589,22 +615,29 @@
   color: #2b2b2b;
   font-family: 'Poppins', sans-serif;
   transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .formInput:focus,
-.formSelect:focus {
+.formTextarea:focus {
   outline: none;
   border-color: #d62828;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(214, 40, 40, 0.1);
 }
 
+.formTextarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
 .modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f5ebe0;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding: 1rem 2rem 2rem 2rem;
-  border-top: 1px solid #f5ebe0;
 }
 
 .cancelButton,
@@ -620,27 +653,24 @@
 
 .cancelButton {
   background: #f5ebe0;
-  color: #d62828;
-  border: 2px solid #d62828;
+  color: #2b2b2b;
+  border: none;
 }
 
 .cancelButton:hover {
-  background: #d62828;
-  color: #ffffff;
-  transform: translateY(-1px);
+  background: #f0e0d0;
 }
 
 .saveButton {
   background: #d62828;
   color: #ffffff;
   border: none;
-  box-shadow: 0 4px 15px rgba(214, 40, 40, 0.3);
 }
 
 .saveButton:hover {
   background: #b91c1c;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(214, 40, 40, 0.4);
+  box-shadow: 0 4px 15px rgba(214, 40, 40, 0.3);
 }
 
 /* Responsive Design */
@@ -709,18 +739,6 @@
   
   .mobileCards {
     display: flex;
-  }
-  
-  .modalContent {
-    width: 90%;
-    margin: 0 1rem;
-  }
-  
-  .modalHeader,
-  .modalBody,
-  .modalFooter {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
   }
   
   .formGrid {
@@ -793,26 +811,34 @@
     font-size: 0.8rem;
   }
   
+  .modalContent {
+    max-width: 100%;
+  }
+  
   .modalHeader,
   .modalBody,
   .modalFooter {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding: 1rem;
   }
   
   .modalTitle {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
   
-  .modalFooter {
-    flex-direction: column;
-    gap: 0.75rem;
+  .formLabel {
+    font-size: 0.85rem;
+  }
+  
+  .formInput,
+  .formTextarea {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
   }
   
   .cancelButton,
   .saveButton {
-    width: 100%;
-    text-align: center;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -821,19 +847,14 @@
   .tableContainer,
   .controlsSection,
   .statsCard,
-  .customerCard,
-  .modalContent {
+  .customerCard {
     border: 2px solid #2b2b2b;
   }
   
   .actionButton,
   .searchInput,
   .filterSelect,
-  .sortSelect,
-  .formInput,
-  .formSelect,
-  .cancelButton,
-  .saveButton {
+  .sortSelect {
     border: 2px solid currentColor;
   }
   
@@ -848,29 +869,17 @@
   .statsCard,
   .customerCard,
   .tableRow,
-  .actionButton,
-  .modalContent,
-  .closeButton,
-  .cancelButton,
-  .saveButton {
+  .actionButton {
     transition: background-color 0.2s ease, border-color 0.2s ease;
   }
   
   .statsCard:hover,
   .customerCard:hover,
-  .actionButton:hover,
-  .closeButton:hover,
-  .cancelButton:hover,
-  .saveButton:hover {
+  .actionButton:hover {
     transform: none;
   }
   
   .loadingIcon {
-    animation: none;
-  }
-  
-  .modalOverlay,
-  .modalContent {
     animation: none;
   }
 }
@@ -879,12 +888,36 @@
 .searchInput:focus,
 .filterSelect:focus,
 .sortSelect:focus,
-.actionButton:focus,
-.formInput:focus,
-.formSelect:focus,
-.closeButton:focus,
-.cancelButton:focus,
-.saveButton:focus {
+.actionButton:focus {
   outline: 2px solid #d62828;
   outline-offset: 2px;
+}
+
+/* Scrollbar styling for table */
+.tableContainer::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: #f5ebe0;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(214, 40, 40, 0.3);
+  border-radius: 4px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(214, 40, 40, 0.5);
+}
+
+/* Table responsive scroll */
+@media (min-width: 769px) {
+  .tableContainer {
+    overflow-x: auto;
+  }
+  
+  .table {
+    min-width: 1150px;
+  }
 }

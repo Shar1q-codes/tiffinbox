@@ -3,6 +3,8 @@ import {
   addDoc, 
   getDocs, 
   doc, 
+  getDoc,
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
@@ -36,6 +38,8 @@ export interface Customer {
   studentStatus: boolean
   orderDate: Timestamp
   trackingToken: string // New field for tracking
+  subscriptionType?: 'daily' | 'monthly' // New field for subscription type
+  subscriptionEndDate?: Timestamp // New field for subscription end date
 }
 
 // Menu interface
@@ -81,13 +85,23 @@ export interface DeliveryStatus {
 }
 
 // Customer operations
-export const addCustomer = async (customerData: Omit<Customer, 'id' | 'orderDate' | 'trackingToken'>) => {
+export const addCustomer = async (customerData: Omit<Customer, 'id' | 'orderDate' | 'trackingToken' | 'subscriptionEndDate'>) => {
   try {
     const trackingToken = generateTrackingToken()
+    
+    // Calculate subscription end date if monthly
+    let subscriptionEndDate = null
+    if (customerData.subscriptionType === 'monthly') {
+      const endDate = new Date()
+      endDate.setDate(endDate.getDate() + 30) // 30 days from now
+      subscriptionEndDate = Timestamp.fromDate(endDate)
+    }
+    
     const docRef = await addDoc(collection(db, 'customers'), {
       ...customerData,
       orderDate: Timestamp.now(),
-      trackingToken
+      trackingToken,
+      ...(subscriptionEndDate && { subscriptionEndDate })
     })
     
     // Generate order ID
@@ -95,11 +109,24 @@ export const addCustomer = async (customerData: Omit<Customer, 'id' | 'orderDate
     
     // Calculate pricing
     const basePrice = customerData.planType === 'veg' ? 181.99 : 259.99
-    const finalPrice = customerData.studentStatus ? basePrice * 0.8 : basePrice
-    const dailyPrice = `£${finalPrice.toFixed(2)}`
+    let finalPrice = basePrice
     
-    // Create initial delivery status
-    await addDeliveryStatus({
+    // Calculate monthly price (no discount)
+    if (customerData.subscriptionType === 'monthly') {
+      finalPrice = basePrice * 30 // No discount for monthly
+    }
+    
+    // Apply student discount if applicable (20%)
+    if (customerData.studentStatus) {
+      finalPrice = finalPrice * 0.8
+    }
+    
+    const priceDisplay = customerData.subscriptionType === 'monthly' 
+      ? `₹${finalPrice.toFixed(2)} for 30 days` 
+      : `₹${basePrice.toFixed(2)}/day`
+    
+    // Create initial delivery status - MODIFIED to use trackingToken as document ID
+    await setDoc(doc(db, 'deliveryStatus', trackingToken), {
       customerId: docRef.id,
       customerName: customerData.name,
       orderId,
@@ -108,6 +135,7 @@ export const addCustomer = async (customerData: Omit<Customer, 'id' | 'orderDate
       assignedPartner: 'unassigned',
       currentLocation: 'Kitchen - Being Prepared',
       estimatedArrival: calculateETA(customerData.deliverySlot),
+      lastUpdated: Timestamp.now(),
       expiresAt: Timestamp.fromDate(new Date(Date.now() + 48 * 60 * 60 * 1000)) // 48 hours
     })
     
@@ -120,8 +148,9 @@ export const addCustomer = async (customerData: Omit<Customer, 'id' | 'orderDate
         planType: customerData.planType,
         deliverySlot: customerData.deliverySlot,
         orderId,
-        dailyPrice,
-        studentDiscount: customerData.studentStatus
+        dailyPrice: priceDisplay,
+        studentDiscount: customerData.studentStatus,
+        subscriptionType: customerData.subscriptionType || 'monthly'
       })
       console.log('Confirmation email sent successfully')
     } catch (emailError) {
@@ -340,11 +369,12 @@ export const deleteMenuItem = async (id: string) => {
 // Delivery Status operations
 export const addDeliveryStatus = async (deliveryData: Omit<DeliveryStatus, 'id' | 'lastUpdated'>) => {
   try {
-    const docRef = await addDoc(collection(db, 'deliveryStatus'), {
+    // Use setDoc with trackingToken as document ID instead of addDoc
+    await setDoc(doc(db, 'deliveryStatus', deliveryData.trackingToken), {
       ...deliveryData,
       lastUpdated: Timestamp.now()
     })
-    return docRef.id
+    return deliveryData.trackingToken
   } catch (error) {
     console.error('Error adding delivery status:', error)
     throw error
@@ -377,13 +407,10 @@ export const updateDeliveryStatus = async (id: string, data: Partial<DeliverySta
     if (data.status) {
       try {
         // Get the delivery details to send notification
-        const deliveryDoc = await getDocs(query(
-          collection(db, 'deliveryStatus'),
-          where('__name__', '==', id)
-        ))
+        const deliveryDoc = await getDoc(deliveryRef)
         
-        if (!deliveryDoc.empty) {
-          const delivery = deliveryDoc.docs[0].data() as DeliveryStatus
+        if (deliveryDoc.exists()) {
+          const delivery = deliveryDoc.data() as DeliveryStatus
           
           // Get customer email
           const customerDoc = await getDocs(query(
@@ -414,36 +441,38 @@ export const updateDeliveryStatus = async (id: string, data: Partial<DeliverySta
   }
 }
 
-// Token-based delivery tracking (MODIFIED to avoid composite index)
+// Delete delivery status
+export const deleteDeliveryStatus = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'deliveryStatus', id))
+  } catch (error) {
+    console.error('Error deleting delivery status:', error)
+    throw error
+  }
+}
+
+// Token-based delivery tracking (UPDATED to use direct document access)
 export const getDeliveryByToken = async (trackingToken: string): Promise<DeliveryStatus | null> => {
   try {
-    // First query by tracking token only
-    const q = query(
-      collection(db, 'deliveryStatus'),
-      where('trackingToken', '==', trackingToken.toUpperCase())
-    )
-    const querySnapshot = await getDocs(q)
+    // Get document directly by ID (trackingToken)
+    const docRef = doc(db, 'deliveryStatus', trackingToken.toUpperCase())
+    const docSnap = await getDoc(docRef)
     
-    if (querySnapshot.empty) {
+    if (!docSnap.exists()) {
       return null
     }
     
-    // Filter expired deliveries client-side
+    // Check if delivery has expired
+    const data = docSnap.data() as DeliveryStatus
     const now = Timestamp.now()
-    const validDeliveries = querySnapshot.docs.filter(doc => {
-      const data = doc.data() as DeliveryStatus
-      return data.expiresAt > now
-    })
     
-    if (validDeliveries.length === 0) {
+    if (data.expiresAt < now) {
       return null
     }
     
-    // Return the most recent valid delivery
-    const docSnapshot = validDeliveries[0]
     return {
-      id: docSnapshot.id,
-      ...docSnapshot.data()
+      id: docSnap.id,
+      ...data
     } as DeliveryStatus
   } catch (error) {
     console.error('Error getting delivery by token:', error)
@@ -451,40 +480,32 @@ export const getDeliveryByToken = async (trackingToken: string): Promise<Deliver
   }
 }
 
-// Real-time token-based tracking (MODIFIED to avoid composite index)
+// Real-time token-based tracking (UPDATED to use direct document access)
 export const subscribeToDeliveryByToken = (
   trackingToken: string,
   callback: (status: DeliveryStatus | null) => void
 ) => {
-  // Query by tracking token only
-  const q = query(
-    collection(db, 'deliveryStatus'),
-    where('trackingToken', '==', trackingToken.toUpperCase())
-  )
+  // Listen to document directly by ID (trackingToken)
+  const docRef = doc(db, 'deliveryStatus', trackingToken.toUpperCase())
   
-  return onSnapshot(q, (querySnapshot) => {
-    if (querySnapshot.empty) {
+  return onSnapshot(docRef, (docSnapshot) => {
+    if (!docSnapshot.exists()) {
       callback(null)
       return
     }
     
-    // Filter expired deliveries client-side
+    // Check if delivery has expired
+    const data = docSnapshot.data() as DeliveryStatus
     const now = Timestamp.now()
-    const validDeliveries = querySnapshot.docs.filter(doc => {
-      const data = doc.data() as DeliveryStatus
-      return data.expiresAt > now
-    })
     
-    if (validDeliveries.length === 0) {
+    if (data.expiresAt < now) {
       callback(null)
       return
     }
     
-    // Return the most recent valid delivery
-    const docSnapshot = validDeliveries[0]
     callback({
       id: docSnapshot.id,
-      ...docSnapshot.data()
+      ...data
     } as DeliveryStatus)
   })
 }

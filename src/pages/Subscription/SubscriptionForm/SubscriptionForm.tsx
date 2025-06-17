@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { addCustomer } from '../../../services/firestore'
 import styles from './SubscriptionForm.module.css'
@@ -11,15 +11,19 @@ interface FormData {
   deliverySlot: string
   planType: 'veg' | 'non-veg'
   studentStatus: boolean
+  subscriptionType: 'daily' | 'monthly'
+  studentIdFile: File | null
 }
 
 const SubscriptionForm: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<string>('')
   const [selectedPlan, setSelectedPlan] = useState<'veg' | 'non-veg'>('veg')
+  const [selectedSubscription, setSelectedSubscription] = useState<'daily' | 'monthly'>('monthly')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [trackingToken, setTrackingToken] = useState<string>('')
+  const [fileError, setFileError] = useState<string>('')
   const location = useLocation()
   const navigate = useNavigate()
   
@@ -30,7 +34,9 @@ const SubscriptionForm: React.FC = () => {
     address: '',
     deliverySlot: '',
     planType: 'veg',
-    studentStatus: false
+    studentStatus: false,
+    subscriptionType: 'monthly',
+    studentIdFile: null
   })
 
   useEffect(() => {
@@ -76,6 +82,11 @@ const SubscriptionForm: React.FC = () => {
     setFormData(prev => ({ ...prev, planType: plan }))
   }
 
+  const handleSubscriptionSelect = (type: 'daily' | 'monthly') => {
+    setSelectedSubscription(type)
+    setFormData(prev => ({ ...prev, subscriptionType: type }))
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
@@ -84,12 +95,46 @@ const SubscriptionForm: React.FC = () => {
       ...prev, 
       [name]: type === 'checkbox' ? checked : value 
     }))
+
+    // Clear file error when student status is unchecked
+    if (name === 'studentStatus' && !checked) {
+      setFileError('')
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError('File size exceeds 5MB limit')
+        return
+      }
+      
+      // Check file type (only PDF, JPG, PNG)
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png']
+      if (!validTypes.includes(file.type)) {
+        setFileError('Only PDF, JPG, and PNG files are allowed')
+        return
+      }
+      
+      setFileError('')
+    }
+    
+    setFormData(prev => ({ ...prev, studentIdFile: file }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!isFormValid) return
+
+    // Validate student ID file if student discount is selected
+    if (formData.studentStatus && !formData.studentIdFile) {
+      setFileError('Please upload your student ID to claim the discount')
+      return
+    }
 
     try {
       setIsSubmitting(true)
@@ -102,7 +147,8 @@ const SubscriptionForm: React.FC = () => {
         address: formData.address,
         deliverySlot: formData.deliverySlot,
         planType: formData.planType,
-        studentStatus: formData.studentStatus
+        studentStatus: formData.studentStatus,
+        subscriptionType: formData.subscriptionType
       })
 
       setTrackingToken(result.trackingToken)
@@ -128,17 +174,40 @@ const SubscriptionForm: React.FC = () => {
       address: '',
       deliverySlot: '',
       planType: 'veg',
-      studentStatus: false
+      studentStatus: false,
+      subscriptionType: 'monthly',
+      studentIdFile: null
     })
     setSelectedSlot('')
     setSelectedPlan('veg')
+    setSelectedSubscription('monthly')
     setSubmitSuccess(false)
     setTrackingToken('')
+    setFileError('')
   }
 
   const isFormValid = formData.name && formData.contactNumber && formData.email && formData.address && formData.deliverySlot
 
-  const currentPrice = selectedPlan === 'veg' ? '₹181.99' : '₹259.99'
+  // Calculate prices based on plan and subscription type
+  const getDailyPrice = () => {
+    const basePrice = selectedPlan === 'veg' ? 181.99 : 259.99
+    return basePrice
+  }
+
+  const getMonthlyPrice = () => {
+    const dailyPrice = getDailyPrice()
+    // No discount for monthly subscription (30 days)
+    return dailyPrice * 30
+  }
+
+  const getCurrentPrice = () => {
+    const price = selectedSubscription === 'daily' ? getDailyPrice() : getMonthlyPrice()
+    return formData.studentStatus ? price * 0.8 : price
+  }
+
+  const formatPrice = (price: number) => {
+    return `₹${price.toFixed(2)}`
+  }
 
   if (submitSuccess) {
     return (
@@ -167,16 +236,18 @@ const SubscriptionForm: React.FC = () => {
                 <span className={styles.successValue}>{formData.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}</span>
               </div>
               <div className={styles.successItem}>
+                <span className={styles.successLabel}>Subscription:</span>
+                <span className={styles.successValue}>{formData.subscriptionType === 'daily' ? 'Daily' : 'Monthly (30 days)'}</span>
+              </div>
+              <div className={styles.successItem}>
                 <span className={styles.successLabel}>Delivery Time:</span>
                 <span className={styles.successValue}>{deliverySlots.find(slot => slot.time === formData.deliverySlot)?.label}</span>
               </div>
               <div className={styles.successItem}>
-                <span className={styles.successLabel}>Daily Price:</span>
+                <span className={styles.successLabel}>Price:</span>
                 <span className={styles.successValue}>
-                  {formData.studentStatus 
-                    ? `₹${(parseFloat(currentPrice.replace('₹', '')) * 0.8).toFixed(2)} (20% student discount)`
-                    : currentPrice
-                  }
+                  {formatPrice(getCurrentPrice())}
+                  {formData.studentStatus ? ' (20% student discount applied)' : ''}
                 </span>
               </div>
             </div>
@@ -215,6 +286,31 @@ const SubscriptionForm: React.FC = () => {
 
         <div className={`${styles.formCard} ${isVisible ? styles.slideUp : ''}`}>
           <form onSubmit={handleSubmit} className={styles.form}>
+            
+            {/* Subscription Type Selection */}
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>
+                <span className={styles.sectionIcon}>📅</span>
+                Subscription Type
+              </h3>
+              <div className={styles.planGrid}>
+                <button
+                  type="button"
+                  className={`${styles.planCard} ${selectedSubscription === 'monthly' ? styles.active : ''}`}
+                  onClick={() => handleSubscriptionSelect('monthly')}
+                >
+                  <div className={styles.planIcon}>📅</div>
+                  <div className={styles.planInfo}>
+                    <h4 className={styles.planName}>Monthly</h4>
+                    <p className={styles.planPrice}>30 days</p>
+                    <p className={styles.planDescription}>Convenient monthly billing</p>
+                  </div>
+                  <div className={styles.planCheck}>
+                    {selectedSubscription === 'monthly' && <span>✓</span>}
+                  </div>
+                </button>
+              </div>
+            </div>
             
             {/* Plan Selection */}
             <div className={styles.section}>
@@ -357,7 +453,7 @@ const SubscriptionForm: React.FC = () => {
                 <div className={styles.discountIcon}>🎓</div>
                 <div className={styles.discountContent}>
                   <h4 className={styles.discountTitle}>Student Discount Available</h4>
-                  <p className={styles.discountText}>Get 20% off with valid student ID</p>
+                  <p className={styles.discountText}>Get 20% off with valid UK student ID</p>
                 </div>
                 <label className={styles.checkboxContainer}>
                   <input
@@ -371,6 +467,32 @@ const SubscriptionForm: React.FC = () => {
                   <span className={styles.checkboxLabel}>I'm a student</span>
                 </label>
               </div>
+
+              {/* Student ID Upload */}
+              {formData.studentStatus && (
+                <div className={styles.fieldGroup} style={{ marginTop: '1rem' }}>
+                  <label htmlFor="studentIdFile" className={styles.fieldLabel}>
+                    Upload Student ID (UK) *
+                  </label>
+                  <input
+                    type="file"
+                    id="studentIdFile"
+                    name="studentIdFile"
+                    onChange={handleFileChange}
+                    className={styles.fieldInput}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    required={formData.studentStatus}
+                  />
+                  <div className={styles.inputHint}>
+                    Upload your valid UK student ID (PDF, JPG, PNG, max 5MB)
+                  </div>
+                  {fileError && (
+                    <div className={styles.errorMessage} style={{ fontSize: '0.7rem', color: '#d62828', marginTop: '0.25rem' }}>
+                      {fileError}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Summary & Submit */}
@@ -383,8 +505,19 @@ const SubscriptionForm: React.FC = () => {
                   </span>
                 </div>
                 <div className={styles.summaryRow}>
-                  <span className={styles.summaryLabel}>Daily Price:</span>
-                  <span className={styles.summaryValue}>{currentPrice}</span>
+                  <span className={styles.summaryLabel}>Subscription:</span>
+                  <span className={styles.summaryValue}>
+                    {selectedSubscription === 'daily' ? 'Daily' : 'Monthly (30 days)'}
+                  </span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Base Price:</span>
+                  <span className={styles.summaryValue}>
+                    {selectedSubscription === 'daily' 
+                      ? `${formatPrice(getDailyPrice())}/day`
+                      : `${formatPrice(getDailyPrice() * 30)} for 30 days`
+                    }
+                  </span>
                 </div>
                 {formData.studentStatus && (
                   <div className={styles.summaryRow}>
@@ -394,20 +527,18 @@ const SubscriptionForm: React.FC = () => {
                 )}
                 <div className={styles.summaryDivider}></div>
                 <div className={styles.summaryRow}>
-                  <span className={styles.totalLabel}>Total per day:</span>
+                  <span className={styles.totalLabel}>Total:</span>
                   <span className={styles.totalValue}>
-                    {formData.studentStatus 
-                      ? `₹${(parseFloat(currentPrice.replace('₹', '')) * 0.8).toFixed(2)}`
-                      : currentPrice
-                    }
+                    {formatPrice(getCurrentPrice())}
+                    {selectedSubscription === 'daily' ? '/day' : ' for 30 days'}
                   </span>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className={`${styles.submitButton} ${!isFormValid ? styles.disabled : ''}`}
-                disabled={!isFormValid || isSubmitting}
+                className={`${styles.submitButton} ${!isFormValid || (formData.studentStatus && !formData.studentIdFile) || !!fileError ? styles.disabled : ''}`}
+                disabled={!isFormValid || (formData.studentStatus && !formData.studentIdFile) || !!fileError || isSubmitting}
               >
                 {isSubmitting ? (
                   <>

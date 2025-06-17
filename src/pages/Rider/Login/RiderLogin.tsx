@@ -94,6 +94,11 @@ const RiderLogin: React.FC = () => {
   return (
     <div className={styles.riderLogin}>
       <div className={styles.container}>
+        <div className={styles.homeButtonContainer}>
+          <Link to="/" className={styles.homeButton}>
+            ← Back to Home
+          </Link>
+        </div>
         <div className={styles.loginCard}>
           {/* Header */}
           <div className={styles.header}>

@@ -11,8 +11,9 @@ service cloud.firestore {
       allow write: if request.auth != null && isAdmin();
     }
     
-    // Customer data - only authenticated users can read/write their own data
+    // Customer data - allow creation for all users, read/write for authenticated users
     match /customers/{document} {
+      allow create: if true; // Allow unauthenticated users to create subscription records
       allow read, write: if request.auth != null;
     }
     
@@ -36,16 +37,25 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdmin();
     }
     
-    // Delivery status - authenticated users can read, riders and admins can update
+    // Delivery status - allow creation for all users, allow public read access by tracking token
     match /deliveryStatus/{document} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      // Allow read access for:
+      // 1. Authenticated users OR
+      // 2. Public access if the document ID matches the tracking token AND it hasn't expired
+      allow read: if request.auth != null || 
+                   (document == resource.data.trackingToken && 
+                    resource.data.expiresAt > request.time);
+      
+      allow create: if true; // Allow unauthenticated users to create delivery status records
       
       // Allow updates from admins or assigned riders
       allow update: if request.auth != null && (
         isAdmin() || 
         isAssignedRider(resource.data.assignedPartner)
       );
+      
+      // ADD THIS LINE: Allow delete for admins
+      allow delete: if request.auth != null && isAdmin();
     }
     
     // Helper functions
@@ -108,6 +118,7 @@ SECURITY CONSIDERATIONS:
 - Admin functions are restricted to authorized emails
 - All database writes are logged and auditable
 - Self-registered riders cannot access the system until approved
+- Unauthenticated users can create subscription records to enable new customer signups
 
 DEPLOYMENT CHECKLIST:
 1. Update admin email addresses in the security rules
@@ -117,4 +128,5 @@ DEPLOYMENT CHECKLIST:
 5. Confirm that customers can track their orders
 6. Test OTP generation and email notifications
 7. Verify that self-registered riders cannot access the system until approved
+8. Test that unauthenticated users can successfully submit subscription forms
 */

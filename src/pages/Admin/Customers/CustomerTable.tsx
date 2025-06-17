@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { 
   getCustomers, 
-  deleteCustomer,
   updateCustomer,
+  deleteCustomer,
   Customer 
 } from '../../../services/firestore'
 import styles from './CustomerTable.module.css'
@@ -10,6 +10,7 @@ import styles from './CustomerTable.module.css'
 // Extended interface to include status for demo purposes
 interface CustomerWithStatus extends Customer {
   status: 'active' | 'cancelled'
+  daysRemaining?: number | string
 }
 
 type SortField = 'name' | 'deliverySlot' | 'orderDate'
@@ -19,11 +20,22 @@ const CustomerTable: React.FC = () => {
   const [customers, setCustomers] = useState<CustomerWithStatus[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'cancelled'>('all')
+  const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'daily' | 'monthly'>('all')
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
   const [isLoading, setIsLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<CustomerWithStatus | null>(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    deliverySlot: '',
+    planType: 'veg' as 'veg' | 'non-veg',
+    subscriptionType: 'monthly' as 'daily' | 'monthly',
+    status: 'active' as 'active' | 'cancelled'
+  })
 
   // Load customers from Firestore
   useEffect(() => {
@@ -37,6 +49,8 @@ const CustomerTable: React.FC = () => {
       // Add status field for demo purposes (in real app this would be in Firestore)
       const customersWithStatus: CustomerWithStatus[] = customerData.map(customer => ({
         ...customer,
+        // Ensure subscriptionType is set, defaulting to 'monthly' if undefined
+        subscriptionType: customer.subscriptionType || 'monthly',
         status: Math.random() > 0.2 ? 'active' : 'cancelled' as 'active' | 'cancelled'
       }))
       setCustomers(customersWithStatus)
@@ -57,7 +71,34 @@ const CustomerTable: React.FC = () => {
       
       const matchesStatus = statusFilter === 'all' || customer.status === statusFilter
       
-      return matchesSearch && matchesStatus
+      const matchesSubscription = 
+        subscriptionFilter === 'all' || 
+        (subscriptionFilter === 'daily' && customer.subscriptionType === 'daily') ||
+        (subscriptionFilter === 'monthly' && customer.subscriptionType === 'monthly')
+      
+      return matchesSearch && matchesStatus && matchesSubscription
+    })
+
+    // Calculate days remaining for monthly subscriptions
+    filtered = filtered.map(customer => {
+      if (customer.subscriptionType === 'monthly' && customer.subscriptionEndDate) {
+        const now = new Date()
+        const endDate = customer.subscriptionEndDate.toDate()
+        
+        // Calculate difference in days
+        const diffTime = endDate.getTime() - now.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        return {
+          ...customer,
+          daysRemaining: diffDays <= 0 ? "Expired" : diffDays
+        }
+      } else {
+        return {
+          ...customer,
+          daysRemaining: "N/A"
+        }
+      }
     })
 
     // Sort customers
@@ -89,7 +130,7 @@ const CustomerTable: React.FC = () => {
     })
 
     return filtered
-  }, [customers, searchTerm, statusFilter, sortField, sortOrder])
+  }, [customers, searchTerm, statusFilter, subscriptionFilter, sortField, sortOrder])
 
   // Statistics
   const stats = useMemo(() => {
@@ -97,15 +138,78 @@ const CustomerTable: React.FC = () => {
     const active = customers.filter(c => c.status === 'active').length
     const cancelled = customers.filter(c => c.status === 'cancelled').length
     const vegCustomers = customers.filter(c => c.planType === 'veg').length
+    const monthlySubscribers = customers.filter(c => c.subscriptionType === 'monthly').length
 
-    return { total, active, cancelled, vegCustomers }
+    return { total, active, cancelled, vegCustomers, monthlySubscribers }
   }, [customers])
 
   const handleEdit = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId)
     if (customer) {
       setEditingCustomer(customer)
+      setFormData({
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address || '',
+        deliverySlot: customer.deliverySlot,
+        planType: customer.planType,
+        subscriptionType: customer.subscriptionType || 'monthly',
+        status: customer.status
+      })
       setShowEditModal(true)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingCustomer) return
+
+    try {
+      // Update customer in Firestore
+      await updateCustomer(editingCustomer.id!, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        deliverySlot: formData.deliverySlot,
+        planType: formData.planType,
+        subscriptionType: formData.subscriptionType
+      })
+
+      // Update local state
+      setCustomers(prev => prev.map(c => 
+        c.id === editingCustomer.id 
+          ? { 
+              ...c, 
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              address: formData.address,
+              deliverySlot: formData.deliverySlot,
+              planType: formData.planType,
+              subscriptionType: formData.subscriptionType,
+              status: formData.status
+            } 
+          : c
+      ))
+
+      // Close modal
+      setShowEditModal(false)
+      setEditingCustomer(null)
+      
+      // Show success message
+      alert('Customer updated successfully!')
+    } catch (error) {
+      console.error('Error updating customer:', error)
+      alert('Failed to update customer. Please try again.')
     }
   }
 
@@ -125,44 +229,6 @@ const CustomerTable: React.FC = () => {
     const [field, order] = e.target.value.split('-') as [SortField, SortOrder]
     setSortField(field)
     setSortOrder(order)
-  }
-
-  const handleUpdateCustomer = async (updatedCustomer: CustomerWithStatus) => {
-    try {
-      if (!updatedCustomer.id) return
-      
-      // Extract fields that can be updated
-      const { name, email, phone, address, deliverySlot, planType } = updatedCustomer
-      
-      await updateCustomer(updatedCustomer.id, {
-        name, email, phone, address, deliverySlot, planType
-      })
-      
-      setShowEditModal(false)
-      setEditingCustomer(null)
-      await loadCustomers()
-      
-      alert('✅ Customer updated successfully!')
-    } catch (error) {
-      console.error('Error updating customer:', error)
-      alert('❌ Failed to update customer. Please try again.')
-    }
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    
-    if (editingCustomer) {
-      setEditingCustomer({
-        ...editingCustomer,
-        [name]: value
-      })
-    }
-  }
-
-  const handleCloseModal = () => {
-    setShowEditModal(false)
-    setEditingCustomer(null)
   }
 
   if (isLoading) {
@@ -222,6 +288,22 @@ const CustomerTable: React.FC = () => {
           </div>
 
           <div className={styles.controlGroup}>
+            <label htmlFor="subscriptionFilter" className={styles.controlLabel}>
+              Filter by Subscription
+            </label>
+            <select
+              id="subscriptionFilter"
+              value={subscriptionFilter}
+              onChange={(e) => setSubscriptionFilter(e.target.value as typeof subscriptionFilter)}
+              className={styles.filterSelect}
+            >
+              <option value="all">All Subscriptions</option>
+              <option value="daily">Daily Only</option>
+              <option value="monthly">Monthly Only</option>
+            </select>
+          </div>
+
+          <div className={styles.controlGroup}>
             <label htmlFor="sort" className={styles.controlLabel}>
               Sort By
             </label>
@@ -242,7 +324,7 @@ const CustomerTable: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Stats Cards */}
       <div className={styles.statsSection}>
         <div className={styles.statsCards}>
           <div className={styles.statsCard}>
@@ -265,6 +347,11 @@ const CustomerTable: React.FC = () => {
             <div className={styles.statsValue}>{stats.vegCustomers}</div>
             <div className={styles.statsLabel}>Vegetarian</div>
           </div>
+          <div className={styles.statsCard}>
+            <span className={styles.statsIcon}>📅</span>
+            <div className={styles.statsValue}>{stats.monthlySubscribers}</div>
+            <div className={styles.statsLabel}>Monthly Subscribers</div>
+          </div>
         </div>
       </div>
 
@@ -285,7 +372,7 @@ const CustomerTable: React.FC = () => {
             <span className={styles.emptyIcon}>🔍</span>
             <div className={styles.emptyText}>No customers found</div>
             <div className={styles.emptySubtext}>
-              {searchTerm || statusFilter !== 'all' 
+              {searchTerm || statusFilter !== 'all' || subscriptionFilter !== 'all'
                 ? 'Try adjusting your search or filter criteria'
                 : 'No customers have been added yet'
               }
@@ -302,6 +389,8 @@ const CustomerTable: React.FC = () => {
                   <th className={styles.tableHeadCell}>Phone Number</th>
                   <th className={styles.tableHeadCell}>Delivery Slot</th>
                   <th className={styles.tableHeadCell}>Plan Type</th>
+                  <th className={styles.tableHeadCell}>Subscription</th>
+                  <th className={styles.tableHeadCell}>Days Remaining</th>
                   <th className={styles.tableHeadCell}>Status</th>
                   <th className={styles.tableHeadCell}>Actions</th>
                 </tr>
@@ -328,6 +417,29 @@ const CustomerTable: React.FC = () => {
                         </span>
                         {customer.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
                       </div>
+                    </td>
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.statusBadge} ${styles.active}`} style={{
+                        background: customer.subscriptionType === 'monthly' ? '#e0f2fe' : '#fef3c7',
+                        color: customer.subscriptionType === 'monthly' ? '#0369a1' : '#92400e',
+                        borderColor: customer.subscriptionType === 'monthly' ? '#bae6fd' : '#fde68a'
+                      }}>
+                        <span className={styles.statusIcon}>
+                          {customer.subscriptionType === 'monthly' ? '📅' : '📆'}
+                        </span>
+                        {customer.subscriptionType === 'monthly' ? 'Monthly' : 'Daily'}
+                      </span>
+                    </td>
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.statusBadge}`} style={{
+                        background: typeof customer.daysRemaining === 'number' ? '#dcfce7' : '#f5f5f5',
+                        color: typeof customer.daysRemaining === 'number' ? '#166534' : 
+                               customer.daysRemaining === 'Expired' ? '#dc2626' : '#6b7280',
+                        borderColor: typeof customer.daysRemaining === 'number' ? '#bbf7d0' : 
+                                    customer.daysRemaining === 'Expired' ? '#fecaca' : '#e5e7eb'
+                      }}>
+                        {customer.daysRemaining}
+                      </span>
                     </td>
                     <td className={styles.tableCell}>
                       <span className={`${styles.statusBadge} ${styles[customer.status]}`}>
@@ -403,6 +515,18 @@ const CustomerTable: React.FC = () => {
                       </span>
                     </div>
                     <div className={styles.cardDetail}>
+                      <span className={styles.cardDetailLabel}>Subscription</span>
+                      <span className={styles.cardDetailValue}>
+                        {customer.subscriptionType === 'monthly' ? '📅 Monthly' : '📆 Daily'}
+                      </span>
+                    </div>
+                    <div className={styles.cardDetail}>
+                      <span className={styles.cardDetailLabel}>Days Remaining</span>
+                      <span className={styles.cardDetailValue}>
+                        {customer.daysRemaining}
+                      </span>
+                    </div>
+                    <div className={styles.cardDetail}>
                       <span className={styles.cardDetailLabel}>Status</span>
                       <span className={styles.cardDetailValue}>
                         {customer.status === 'active' ? '✅ Active' : '❌ Cancelled'}
@@ -416,15 +540,15 @@ const CustomerTable: React.FC = () => {
         )}
       </div>
 
-      {/* Edit Customer Modal */}
-      {showEditModal && editingCustomer && (
+      {/* Edit Modal */}
+      {showEditModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Edit Customer</h3>
               <button 
-                className={styles.closeButton}
-                onClick={handleCloseModal}
+                className={styles.modalClose}
+                onClick={() => setShowEditModal(false)}
               >
                 ✕
               </button>
@@ -432,50 +556,42 @@ const CustomerTable: React.FC = () => {
             <div className={styles.modalBody}>
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="name" className={styles.formLabel}>Full Name</label>
+                  <label className={styles.formLabel}>Name</label>
                   <input
                     type="text"
-                    id="name"
                     name="name"
-                    value={editingCustomer.name}
+                    value={formData.name}
                     onChange={handleInputChange}
                     className={styles.formInput}
-                    required
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="email" className={styles.formLabel}>Email Address</label>
+                  <label className={styles.formLabel}>Email</label>
                   <input
                     type="email"
-                    id="email"
                     name="email"
-                    value={editingCustomer.email}
+                    value={formData.email}
                     onChange={handleInputChange}
                     className={styles.formInput}
-                    required
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="phone" className={styles.formLabel}>Phone Number</label>
+                  <label className={styles.formLabel}>Phone</label>
                   <input
                     type="tel"
-                    id="phone"
                     name="phone"
-                    value={editingCustomer.phone}
+                    value={formData.phone}
                     onChange={handleInputChange}
                     className={styles.formInput}
-                    required
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="deliverySlot" className={styles.formLabel}>Delivery Slot</label>
+                  <label className={styles.formLabel}>Delivery Slot</label>
                   <select
-                    id="deliverySlot"
                     name="deliverySlot"
-                    value={editingCustomer.deliverySlot}
+                    value={formData.deliverySlot}
                     onChange={handleInputChange}
-                    className={styles.formSelect}
-                    required
+                    className={styles.formInput}
                   >
                     <option value="18:00">6:00 PM</option>
                     <option value="19:00">7:00 PM</option>
@@ -485,29 +601,48 @@ const CustomerTable: React.FC = () => {
                   </select>
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="planType" className={styles.formLabel}>Plan Type</label>
+                  <label className={styles.formLabel}>Plan Type</label>
                   <select
-                    id="planType"
                     name="planType"
-                    value={editingCustomer.planType}
+                    value={formData.planType}
                     onChange={handleInputChange}
-                    className={styles.formSelect}
-                    required
+                    className={styles.formInput}
                   >
                     <option value="veg">Vegetarian</option>
                     <option value="non-veg">Non-Vegetarian</option>
                   </select>
                 </div>
-                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="address" className={styles.formLabel}>Delivery Address</label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={editingCustomer.address}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Subscription Type</label>
+                  <select
+                    name="subscriptionType"
+                    value={formData.subscriptionType}
                     onChange={handleInputChange}
                     className={styles.formInput}
-                    required
+                  >
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Status</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className={styles.formInput}
+                  >
+                    <option value="active">Active</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label className={styles.formLabel}>Address</label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className={styles.formTextarea}
+                    rows={3}
                   />
                 </div>
               </div>
@@ -515,13 +650,13 @@ const CustomerTable: React.FC = () => {
             <div className={styles.modalFooter}>
               <button 
                 className={styles.cancelButton}
-                onClick={handleCloseModal}
+                onClick={() => setShowEditModal(false)}
               >
                 Cancel
               </button>
               <button 
                 className={styles.saveButton}
-                onClick={() => handleUpdateCustomer(editingCustomer)}
+                onClick={handleSaveEdit}
               >
                 Save Changes
               </button>

@@ -163,6 +163,11 @@ const RiderSignup: React.FC = () => {
   return (
     <div className={styles.riderSignup}>
       <div className={styles.container}>
+        <div className={styles.homeButtonContainer}>
+          <Link to="/" className={styles.homeButton}>
+            ← Back to Home
+          </Link>
+        </div>
         <div className={styles.signupCard}>
           {/* Header */}
           <div className={styles.header}>

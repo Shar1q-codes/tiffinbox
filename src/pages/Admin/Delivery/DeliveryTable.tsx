@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { 
   getDeliveryStatuses, 
   updateDeliveryStatus,
+  deleteDeliveryStatus,
   getDeliveryPartners,
   DeliveryStatus,
   DeliveryPartner 
@@ -20,6 +21,8 @@ const DeliveryTable: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [isLoading, setIsLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false)
+  const [viewingOrder, setViewingOrder] = useState<DeliveryStatus | null>(null)
 
   // Status options
   const statusOptions = [
@@ -156,17 +159,22 @@ const DeliveryTable: React.FC = () => {
     }
   }
 
-  const handleView = (orderId: string) => {
-    console.log('View order:', orderId)
-    // In a real app, this would open a detailed view modal or navigate to order details
-    alert(`View order functionality would be implemented here for order: ${orderId}`)
+  const handleView = (order: DeliveryStatus) => {
+    setViewingOrder(order)
+    setShowOrderDetailsModal(true)
   }
 
   const handleRemove = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId)
     if (order && window.confirm(`Are you sure you want to remove order ${order.orderId}?`)) {
-      // In a real app, you might want to delete or archive the order
-      console.log('Remove order:', orderId)
+      try {
+        await deleteDeliveryStatus(orderId)
+        await loadData()
+        alert('✅ Order removed successfully')
+      } catch (error) {
+        console.error('Error removing order:', error)
+        alert('❌ Failed to remove order. Please try again.')
+      }
     }
   }
 
@@ -444,7 +452,7 @@ const DeliveryTable: React.FC = () => {
                       <div className={styles.actionsCell}>
                         <button
                           className={`${styles.actionButton} ${styles.viewButton}`}
-                          onClick={() => handleView(order.orderId)}
+                          onClick={() => handleView(order)}
                           aria-label={`View order ${order.orderId}`}
                         >
                           🔍
@@ -477,7 +485,7 @@ const DeliveryTable: React.FC = () => {
                       <div className={styles.cardActions}>
                         <button
                           className={`${styles.actionButton} ${styles.viewButton}`}
-                          onClick={() => handleView(order.orderId)}
+                          onClick={() => handleView(order)}
                           aria-label={`View order ${order.orderId}`}
                         >
                           🔍
@@ -572,6 +580,113 @@ const DeliveryTable: React.FC = () => {
             </div>
           </>
         )}
+      </div>
+
+      {/* Order Details Modal */}
+      {showOrderDetailsModal && viewingOrder && (
+        <OrderDetailsModal 
+          order={viewingOrder} 
+          onClose={() => setShowOrderDetailsModal(false)}
+          partnerName={getPartnerName(viewingOrder.assignedPartner)}
+        />
+      )}
+    </div>
+  )
+}
+
+// Order Details Modal Component
+interface OrderDetailsModalProps {
+  order: DeliveryStatus
+  onClose: () => void
+  partnerName: string
+}
+
+const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, partnerName }) => {
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>Order Details</h3>
+          <button 
+            className={styles.modalClose}
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+        <div className={styles.modalBody}>
+          <div className={styles.orderDetailGrid}>
+            <div className={styles.orderDetailSection}>
+              <h4 className={styles.sectionTitle}>Order Information</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Order ID:</span>
+                <span className={styles.detailValue}>#{order.orderId}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Tracking Token:</span>
+                <span className={styles.detailValue}>{order.trackingToken}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Status:</span>
+                <span className={styles.detailValue}>
+                  {order.status === 'prepared' ? '🍽️ Being Prepared' :
+                   order.status === 'pickedUp' ? '📦 Picked Up' :
+                   order.status === 'onTheWay' ? '🚚 On the Way' :
+                   '✅ Delivered'}
+                </span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Delivery Slot:</span>
+                <span className={styles.detailValue}>{order.estimatedArrival}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Current Location:</span>
+                <span className={styles.detailValue}>{order.currentLocation}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Last Updated:</span>
+                <span className={styles.detailValue}>
+                  {order.lastUpdated.toDate().toLocaleString()}
+                </span>
+              </div>
+            </div>
+            
+            <div className={styles.orderDetailSection}>
+              <h4 className={styles.sectionTitle}>Customer Information</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Name:</span>
+                <span className={styles.detailValue}>{order.customerName}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Customer ID:</span>
+                <span className={styles.detailValue}>{order.customerId}</span>
+              </div>
+            </div>
+            
+            <div className={styles.orderDetailSection}>
+              <h4 className={styles.sectionTitle}>Delivery Information</h4>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Assigned Partner:</span>
+                <span className={styles.detailValue}>{partnerName}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Expires At:</span>
+                <span className={styles.detailValue}>
+                  {order.expiresAt.toDate().toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className={styles.modalActions}>
+            <button 
+              className={styles.modalButton}
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../../contexts/AuthContext'
 import styles from './AdminLogin.module.css'
 
@@ -78,6 +78,11 @@ const AdminLogin: React.FC = () => {
   return (
     <div className={styles.adminLogin}>
       <div className={styles.container}>
+        <div className={styles.homeButtonContainer}>
+          <Link to="/" className={styles.homeButton}>
+            ← Back to Home
+          </Link>
+        </div>
         <div className={styles.loginCard}>
           {/* Header */}
           <div className={styles.header}>

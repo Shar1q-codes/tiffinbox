@@ -29,6 +29,37 @@
   max-width: 450px;
 }
 
+/* Home Button */
+.homeButtonContainer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.homeButton {
+  background: #f5ebe0;
+  border: 2px solid #d62828;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  color: #d62828;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.homeButton:hover {
+  background: #d62828;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 /* Login Card */
 .loginCard {
   background: #ffffff;
@@ -371,6 +402,11 @@
     font-size: 0.85rem;
     padding: 0.6rem 0.8rem;
   }
+  
+  .homeButton {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
 
 /* High contrast mode support */
@@ -418,13 +454,4 @@
 .submitButton:focus {
   outline: 2px solid #d62828;
   outline-offset: 2px;
-}
-
-/* Prevent scroll issues */
-.adminLogin {
-  box-sizing: border-box;
-}
-
-.adminLogin * {
-  box-sizing: border-box;
 }

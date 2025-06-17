@@ -17,10 +17,15 @@ export interface EmailNotificationData {
   orderId: string
   dailyPrice: string
   studentDiscount: boolean
+  subscriptionType?: 'daily' | 'monthly'
 }
 
 export const sendSubscriptionConfirmation = async (data: EmailNotificationData): Promise<boolean> => {
   try {
+    const subscriptionDetails = data.subscriptionType === 'monthly' 
+      ? 'Monthly subscription (30 days)' 
+      : 'Daily subscription'
+
     const templateParams = {
       to_name: data.customerName,
       to_email: data.customerEmail,
@@ -37,8 +42,9 @@ Thank you for subscribing to TiffinBox! Your order has been confirmed and we're 
 📋 ORDER DETAILS:
 • Order ID: ${data.orderId}
 • Plan: ${data.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
+• Subscription: ${subscriptionDetails}
 • Delivery Time: ${data.deliverySlot}
-• Daily Price: ${data.dailyPrice}${data.studentDiscount ? ' (20% student discount applied)' : ''}
+• Price: ${data.dailyPrice}${data.studentDiscount ? ' (20% student discount applied)' : ''}
 
 📱 TRACKING INFORMATION:
 Your tracking code is: ${data.trackingToken}
