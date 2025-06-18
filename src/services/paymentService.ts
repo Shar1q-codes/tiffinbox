@@ -1,6 +1,6 @@
 // src/services/paymentService.ts
 import { loadStripe, Stripe, StripeElements, StripeCardElement } from '@stripe/stripe-js';
-import { doc, collection, addDoc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { doc, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 // Load environment variables
@@ -302,7 +302,7 @@ export const updatePaymentStatus = async (paymentIntentId: string, status: strin
     if (!querySnapshot.empty) {
       const docId = querySnapshot.docs[0].id;
       const docRef = doc(db, 'paymentHistory', docId);
-      await docRef.update({ status });
+      await updateDoc(docRef, { status });
     }
   } catch (error) {
     console.error('Error updating payment status:', error);
