@@ -40,6 +40,9 @@ export interface Customer {
   trackingToken: string // New field for tracking
   subscriptionType?: 'daily' | 'monthly' // New field for subscription type
   subscriptionEndDate?: Timestamp // New field for subscription end date
+  paymentIntentId?: string // Payment intent ID from Stripe
+  amount?: number // Amount paid
+  paymentStatus?: string // Payment status from Stripe
 }
 
 // Menu interface
@@ -51,6 +54,18 @@ export interface MenuItem {
   category: 'veg' | 'non-veg'
   isSpecial: boolean
   image?: string
+}
+
+// Weekly Menu interface
+export interface WeeklyMeal {
+  id?: string
+  day: string
+  vegCurry: string
+  vegDry: string
+  nonVegCurry: string
+  rice: string
+  bread: string
+  dips: string
 }
 
 // Delivery Partner interface
@@ -67,6 +82,9 @@ export interface DeliveryPartner {
   rating: number
   joinedDate: Timestamp
   lastActive: Timestamp
+  identityProof?: string
+  identityProofFileName?: string
+  identityProofType?: string
 }
 
 // Delivery Status interface
@@ -366,6 +384,149 @@ export const deleteMenuItem = async (id: string) => {
   }
 }
 
+// Weekly Menu operations
+export const getWeeklyMenu = async (): Promise<WeeklyMeal[]> => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'weeklyMenu'))
+    
+    // If no weekly menu exists, create default data
+    if (querySnapshot.empty) {
+      const defaultMeals = [
+        {
+          day: "MONDAY",
+          vegCurry: "TADKA DAL",
+          vegDry: "MUTTER",
+          nonVegCurry: "CHICKEN KARAHI",
+          rice: "BOILED RICE",
+          bread: "CHAPATI",
+          dips: "RAITA"
+        },
+        {
+          day: "TUESDAY",
+          vegCurry: "BLACK EYE DAL",
+          vegDry: "ALOO MUTTER",
+          nonVegCurry: "CHICKEN TIKKA MASALA",
+          rice: "BOILED RICE",
+          bread: "CHAPATI",
+          dips: "RAITA"
+        },
+        {
+          day: "WEDNESDAY",
+          vegCurry: "RAJMA",
+          vegDry: "DUM ALOO",
+          nonVegCurry: "BUTTER CHICKEN",
+          rice: "BOILED RICE",
+          bread: "CHAPATI",
+          dips: "RAITA"
+        },
+        {
+          day: "THURSDAY",
+          vegCurry: "MIX DAL",
+          vegDry: "MUTTER PANEER",
+          nonVegCurry: "LAMB BIRYANI",
+          rice: "BOILED RICE",
+          bread: "CHAPATI",
+          dips: "RAITA"
+        },
+        {
+          day: "FRIDAY",
+          vegCurry: "CHANA MASALA",
+          vegDry: "MIX VEG",
+          nonVegCurry: "LAMB KARAHI",
+          rice: "BOILED RICE",
+          bread: "CHAPATI",
+          dips: "RAITA"
+        },
+        {
+          day: "SATURDAY",
+          vegCurry: "BUTTER PANEER",
+          vegDry: "SWEET",
+          nonVegCurry: "CHICKEN BIRYANI",
+          rice: "BOILED RICE",
+          bread: "CHAPATI",
+          dips: "RAITA"
+        }
+      ];
+      
+      // Add default meals to Firestore
+      for (const meal of defaultMeals) {
+        await addDoc(collection(db, 'weeklyMenu'), meal);
+      }
+      
+      // Fetch the newly created documents
+      const newSnapshot = await getDocs(collection(db, 'weeklyMenu'));
+      return newSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as WeeklyMeal));
+    }
+    
+    const meals = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as WeeklyMeal));
+    
+    // Sort meals by day of week
+    const dayOrder = {
+      "MONDAY": 1,
+      "TUESDAY": 2,
+      "WEDNESDAY": 3,
+      "THURSDAY": 4,
+      "FRIDAY": 5,
+      "SATURDAY": 6,
+      "SUNDAY": 7
+    };
+    
+    return meals.sort((a, b) => {
+      return (dayOrder[a.day as keyof typeof dayOrder] || 99) - (dayOrder[b.day as keyof typeof dayOrder] || 99);
+    });
+  } catch (error) {
+    console.error('Error getting weekly menu:', error)
+    throw error
+  }
+}
+
+export const updateWeeklyMeal = async (id: string, data: Partial<WeeklyMeal>) => {
+  try {
+    const mealRef = doc(db, 'weeklyMenu', id)
+    await updateDoc(mealRef, data)
+  } catch (error) {
+    console.error('Error updating weekly meal:', error)
+    throw error
+  }
+}
+
+export const addWeeklyMeal = async (data: Omit<WeeklyMeal, 'id'>) => {
+  try {
+    // Check if a meal for this day already exists
+    const q = query(collection(db, 'weeklyMenu'), where('day', '==', data.day))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      // Update existing meal instead of creating a new one
+      const docId = querySnapshot.docs[0].id
+      await updateDoc(doc(db, 'weeklyMenu', docId), data)
+      return docId
+    }
+    
+    // Create new meal if none exists for this day
+    const docRef = await addDoc(collection(db, 'weeklyMenu'), data)
+    return docRef.id
+  } catch (error) {
+    console.error('Error adding weekly meal:', error)
+    throw error
+  }
+}
+
+export const deleteWeeklyMeal = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'weeklyMenu', id))
+  } catch (error) {
+    console.error('Error deleting weekly meal:', error)
+    throw error
+  }
+}
+
 // Delivery Status operations
 export const addDeliveryStatus = async (deliveryData: Omit<DeliveryStatus, 'id' | 'lastUpdated'>) => {
   try {
@@ -587,4 +748,24 @@ export const subscribeToDeliveryPartners = (
     } as DeliveryPartner))
     callback(partners)
   })
+}
+
+// Get rider by ID
+export const getRiderById = async (id: string): Promise<DeliveryPartner | null> => {
+  try {
+    const docRef = doc(db, 'deliveryPartners', id)
+    const docSnap = await getDoc(docRef)
+    
+    if (!docSnap.exists()) {
+      return null
+    }
+    
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    } as DeliveryPartner
+  } catch (error) {
+    console.error('Error getting rider by ID:', error)
+    throw error
+  }
 }

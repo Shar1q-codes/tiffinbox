@@ -7,7 +7,8 @@ import {
   query, 
   where, 
   orderBy,
-  Timestamp
+  Timestamp,
+  getDoc
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { sendDeliveryOTP, sendDeliveryCompletion, sendDeliveryStatusUpdate } from './notifications'
@@ -26,6 +27,9 @@ export interface Rider {
   rating: number
   joinedDate: Timestamp
   lastActive: Timestamp
+  identityProof?: string
+  identityProofFileName?: string
+  identityProofType?: string
 }
 
 // Generate 6-digit OTP
@@ -50,6 +54,26 @@ export const getRiderByEmail = async (email: string): Promise<Rider | null> => {
     } as Rider
   } catch (error) {
     console.error('Error getting rider by email:', error)
+    throw error
+  }
+}
+
+// Get rider by ID
+export const getRiderById = async (id: string): Promise<Rider | null> => {
+  try {
+    const docRef = doc(db, 'deliveryPartners', id)
+    const docSnap = await getDoc(docRef)
+    
+    if (!docSnap.exists()) {
+      return null
+    }
+    
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    } as Rider
+  } catch (error) {
+    console.error('Error getting rider by ID:', error)
     throw error
   }
 }

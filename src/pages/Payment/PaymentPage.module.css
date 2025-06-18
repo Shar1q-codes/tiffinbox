@@ -154,6 +154,56 @@
   gap: 2rem;
 }
 
+/* Payment Method Options */
+.methodOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.methodOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #f5ebe0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 120px;
+}
+
+.methodOption.selected {
+  border-color: #d62828;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(214, 40, 40, 0.1);
+}
+
+.methodOption:hover:not(.disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.methodOption.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f0f0f0;
+  border: 2px solid #e0e0e0;
+}
+
+.methodIcon {
+  font-size: 1.4rem;
+}
+
+.methodName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2b2b2b;
+}
+
 .cardSection {
   display: flex;
   flex-direction: column;

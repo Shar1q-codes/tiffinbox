@@ -1,11 +1,11 @@
 .banner {
   position: fixed;
-  top: 0;
+  top: 70px; /* Position it right below the navbar */
   left: 0;
   right: 0;
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
   color: #ffffff;
-  z-index: 1001; /* Higher than navbar */
+  z-index: 999; /* Lower than navbar */
   font-family: 'Poppins', sans-serif;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border-bottom: 3px solid #fbbf24;
@@ -136,6 +136,7 @@
 @media (max-width: 968px) {
   .banner {
     height: 80px; /* Slightly taller on mobile */
+    top: 65px; /* Adjusted for mobile navbar height */
   }
   
   .container {
@@ -165,6 +166,7 @@
 @media (max-width: 768px) {
   .banner {
     height: 70px;
+    top: 65px;
   }
   
   .container {
@@ -193,6 +195,7 @@
 @media (max-width: 480px) {
   .banner {
     height: 60px;
+    top: 60px;
   }
   
   .container {

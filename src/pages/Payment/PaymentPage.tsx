@@ -1,327 +1,299 @@
-// import React, { useState, useEffect } from 'react'
-// import { useLocation, useNavigate } from 'react-router-dom'
-// import { loadStripe } from '@stripe/stripe-js'
-// import {
-//   Elements,
-//   CardElement,
-//   useStripe,
-//   useElements
-// } from '@stripe/react-stripe-js'
-// import { addCustomer } from '../../services/firestore'
-// import styles from './PaymentPage.module.css'
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  Elements,
+  CardElement,
+  PaymentElement,
+  useStripe,
+  useElements
+} from '@stripe/react-stripe-js';
+import { addCustomer } from '../../services/firestore';
+import { 
+  getStripe, 
+  CustomerPaymentInfo,
+  formatPrice,
+  PaymentMethodType
+} from '../../services/paymentService';
+import { usePaymentContext } from '../../contexts/PaymentContext';
+import usePayment from '../../hooks/usePayment';
+import styles from './PaymentPage.module.css';
 
-// // Initialize Stripe (you'll need to replace with your actual publishable key)
-// const stripePromise = loadStripe('pk_test_51234567890abcdef...')
+// Initialize Stripe instance
+const stripePromise = getStripe();
 
-// interface PaymentData {
-//   name: string
-//   email: string
-//   phone: string
-//   address: string
-//   deliverySlot: string
-//   planType: 'veg' | 'non-veg'
-//   studentStatus: boolean
-//   amount: number
-//   currency: string
-// }
+interface PaymentData {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  deliverySlot: string;
+  planType: 'veg' | 'non-veg';
+  studentStatus: boolean;
+  subscriptionType?: 'daily' | 'monthly';
+  amount: number;
+  currency: string;
+}
 
-// const PaymentForm: React.FC<{ paymentData: PaymentData }> = ({ paymentData }) => {
-//   const stripe = useStripe()
-//   const elements = useElements()
-//   const navigate = useNavigate()
-//   const [isProcessing, setIsProcessing] = useState(false)
-//   const [paymentError, setPaymentError] = useState('')
-//   const [paymentSuccess, setPaymentSuccess] = useState(false)
-//   const [trackingToken, setTrackingToken] = useState('')
+const PaymentMethodSelector: React.FC<{
+  selectedMethod: PaymentMethodType;
+  setSelectedMethod: (method: PaymentMethodType) => void;
+}> = ({ selectedMethod, setSelectedMethod }) => {
+  return (
+    <div className={styles.paymentMethodSelector}>
+      <h3 className={styles.sectionTitle}>
+        <span className={styles.sectionIcon}>💳</span>
+        Payment Method
+      </h3>
+      
+      <div className={styles.methodOptions}>
+        <div 
+          className={`${styles.methodOption} ${styles.selected}`}
+        >
+          <span className={styles.methodIcon}>💳</span>
+          <span className={styles.methodName}>Credit/Debit Card</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-//   const handleSubmit = async (event: React.FormEvent) => {
-//     event.preventDefault()
+const PaymentForm: React.FC<{ paymentData: PaymentData }> = ({ paymentData }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const navigate = useNavigate();
+  const { 
+    isProcessing, 
+    paymentError, 
+    paymentSuccess, 
+    setPaymentError,
+    setProcessingStatus,
+    setSelectedPaymentMethod,
+    selectedPaymentMethod
+  } = usePaymentContext();
+  
+  const { handlePayment, navigateToSuccess } = usePayment();
 
-//     if (!stripe || !elements) {
-//       return
-//     }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-//     setIsProcessing(true)
-//     setPaymentError('')
+    if (!stripe || !elements) {
+      return;
+    }
 
-//     const cardElement = elements.getElement(CardElement)
+    setProcessingStatus(true);
+    setPaymentError(null);
 
-//     if (!cardElement) {
-//       setPaymentError('Card element not found')
-//       setIsProcessing(false)
-//       return
-//     }
+    // Prepare customer payment info
+    const customerInfo: CustomerPaymentInfo = {
+      name: paymentData.name,
+      email: paymentData.email,
+      phone: paymentData.phone,
+      address: paymentData.address
+    };
+    
+    try {
+      // Process payment with our payment hook
+      const paymentResult = await handlePayment(
+        customerInfo,
+        paymentData.amount,
+        paymentData.currency
+      );
+      
+      if (paymentResult) {
+        // Create customer record in our database after successful payment
+        await addCustomer({
+          name: paymentData.name,
+          email: paymentData.email,
+          phone: paymentData.phone,
+          address: paymentData.address,
+          deliverySlot: paymentData.deliverySlot,
+          planType: paymentData.planType,
+          studentStatus: paymentData.studentStatus,
+          subscriptionType: paymentData.subscriptionType || 'daily',
+          paymentIntentId: paymentResult.id, // Store payment intent ID for reference
+          amount: paymentResult.amount,
+          paymentStatus: paymentResult.status
+        });
 
-//     try {
-//       // Create payment method
-//       const { error, paymentMethod } = await stripe.createPaymentMethod({
-//         type: 'card',
-//         card: cardElement,
-//         billing_details: {
-//           name: paymentData.name,
-//           email: paymentData.email,
-//           phone: paymentData.phone,
-//           address: {
-//             line1: paymentData.address,
-//           },
-//         },
-//       })
+        // Navigate to success page with payment details
+        navigateToSuccess(paymentResult);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      if (error instanceof Error) {
+        setPaymentError(error.message);
+      } else {
+        setPaymentError('Payment processing failed. Please try again.');
+      }
+    }
+  };
 
-//       if (error) {
-//         setPaymentError(error.message || 'Payment failed')
-//         setIsProcessing(false)
-//         return
-//       }
+  return (
+    <form onSubmit={handleSubmit} className={styles.paymentForm}>
+      <PaymentMethodSelector 
+        selectedMethod={selectedPaymentMethod}
+        setSelectedMethod={setSelectedPaymentMethod}
+      />
+      
+      <div className={styles.cardSection}>
+        <h3 className={styles.sectionTitle}>
+          <span className={styles.sectionIcon}>💳</span>
+          Payment Details
+        </h3>
+        
+        <div className={styles.cardElementContainer}>
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#2b2b2b',
+                  fontFamily: 'Poppins, sans-serif',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#dc2626',
+                  iconColor: '#dc2626',
+                },
+              },
+            }}
+            className={styles.cardElement}
+          />
+        </div>
 
-//       // In a real implementation, you would send the payment method to your backend
-//       // For demo purposes, we'll simulate a successful payment
-//       await new Promise(resolve => setTimeout(resolve, 2000))
+        {paymentError && (
+          <div className={styles.errorMessage}>
+            <span className={styles.errorIcon}>⚠️</span>
+            {paymentError}
+          </div>
+        )}
 
-//       // Create customer record after successful payment
-//       const result = await addCustomer({
-//         name: paymentData.name,
-//         email: paymentData.email,
-//         phone: paymentData.phone,
-//         address: paymentData.address,
-//         deliverySlot: paymentData.deliverySlot,
-//         planType: paymentData.planType,
-//         studentStatus: paymentData.studentStatus
-//       })
+        <div className={styles.securityNote}>
+          <span className={styles.securityIcon}>🔒</span>
+          <span className={styles.securityText}>
+            Your payment information is secure and encrypted
+          </span>
+        </div>
+      </div>
 
-//       setTrackingToken(result.trackingToken)
-//       setPaymentSuccess(true)
+      <button
+        type="submit"
+        className={styles.payButton}
+        disabled={!stripe || isProcessing}
+      >
+        {isProcessing ? (
+          <>
+            <span className={styles.spinner}></span>
+            Processing Payment...
+          </>
+        ) : (
+          <>
+            <span className={styles.buttonIcon}>💳</span>
+            Pay {formatPrice(paymentData.amount, paymentData.currency)}
+          </>
+        )}
+      </button>
+    </form>
+  );
+};
 
-//     } catch (error) {
-//       console.error('Payment error:', error)
-//       setPaymentError('Payment processing failed. Please try again.')
-//     } finally {
-//       setIsProcessing(false)
-//     }
-//   }
+const PaymentPage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const { clearPaymentState } = usePaymentContext();
 
-//   const handleTrackOrder = () => {
-//     navigate('/tracking')
-//   }
+  useEffect(() => {
+    // Clear any previous payment state
+    clearPaymentState();
+    
+    // Get payment data from navigation state
+    if (location.state) {
+      setPaymentData(location.state as PaymentData);
+    } else {
+      // Redirect to subscription if no payment data
+      navigate('/subscription');
+    }
+  }, [location.state, navigate, clearPaymentState]);
 
-//   const handleNewOrder = () => {
-//     navigate('/subscription')
-//   }
+  if (!paymentData) {
+    return (
+      <div className={styles.paymentPage}>
+        <div className={styles.container}>
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingIcon}>⏳</div>
+            <h2 className={styles.loadingTitle}>Loading Payment...</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-//   if (paymentSuccess) {
-//     return (
-//       <div className={styles.successContainer}>
-//         <div className={styles.successCard}>
-//           <div className={styles.successIcon}>🎉</div>
-//           <h2 className={styles.successTitle}>Payment Successful!</h2>
-//           <p className={styles.successMessage}>
-//             Your payment has been processed and your tiffin subscription is now active.
-//           </p>
+  return (
+    <div className={styles.paymentPage}>
+      <div className={styles.container}>
+        <div className={styles.paymentCard}>
+          <div className={styles.header}>
+            <button 
+              className={styles.backButton}
+              onClick={() => navigate('/subscription')}
+            >
+              ← Back to Subscription
+            </button>
+            <h2 className={styles.title}>Complete Your Payment</h2>
+            <p className={styles.subtitle}>
+              Secure payment powered by Stripe
+            </p>
+          </div>
 
-//           <div className={styles.trackingSection}>
-//             <div className={styles.trackingCard}>
-//               <h3 className={styles.trackingTitle}>📱 Your Tracking Code</h3>
-//               <div className={styles.trackingCode}>{trackingToken}</div>
-//               <p className={styles.trackingNote}>
-//                 Save this code to track your delivery. We've also sent it to your email.
-//               </p>
-//             </div>
-//           </div>
+          <div className={styles.orderSummary}>
+            <h3 className={styles.summaryTitle}>Order Summary</h3>
+            <div className={styles.summaryDetails}>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Plan:</span>
+                <span className={styles.summaryValue}>
+                  {paymentData.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
+                </span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Subscription:</span>
+                <span className={styles.summaryValue}>
+                  {paymentData.subscriptionType === 'monthly' ? 'Monthly' : 'Daily'}
+                </span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Delivery Time:</span>
+                <span className={styles.summaryValue}>{paymentData.deliverySlot}</span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryLabel}>Customer:</span>
+                <span className={styles.summaryValue}>{paymentData.name}</span>
+              </div>
+              {paymentData.studentStatus && (
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Student Discount:</span>
+                  <span className={styles.summaryValue}>20% off</span>
+                </div>
+              )}
+              <div className={styles.summaryDivider}></div>
+              <div className={styles.summaryItem}>
+                <span className={styles.totalLabel}>Total Amount:</span>
+                <span className={styles.totalValue}>
+                  {formatPrice(paymentData.amount, paymentData.currency)}
+                </span>
+              </div>
+            </div>
+          </div>
 
-//           <div className={styles.orderSummary}>
-//             <h3 className={styles.summaryTitle}>Order Summary</h3>
-//             <div className={styles.summaryDetails}>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.summaryLabel}>Plan:</span>
-//                 <span className={styles.summaryValue}>
-//                   {paymentData.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
-//                 </span>
-//               </div>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.summaryLabel}>Delivery Time:</span>
-//                 <span className={styles.summaryValue}>{paymentData.deliverySlot}</span>
-//               </div>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.summaryLabel}>Amount Paid:</span>
-//                 <span className={styles.summaryValue}>
-//                   £{(paymentData.amount / 100).toFixed(2)}
-//                   {paymentData.studentStatus && ' (20% student discount applied)'}
-//                 </span>
-//               </div>
-//             </div>
-//           </div>
+          <Elements stripe={stripePromise}>
+            <PaymentForm paymentData={paymentData} />
+          </Elements>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-//           <div className={styles.successActions}>
-//             <button
-//               className={styles.primaryButton}
-//               onClick={handleTrackOrder}
-//             >
-//               <span className={styles.buttonIcon}>🚚</span>
-//               Track My Order
-//             </button>
-//             <button
-//               className={styles.secondaryButton}
-//               onClick={handleNewOrder}
-//             >
-//               <span className={styles.buttonIcon}>➕</span>
-//               Place Another Order
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     )
-//   }
-
-//   return (
-//     <form onSubmit={handleSubmit} className={styles.paymentForm}>
-//       <div className={styles.cardSection}>
-//         <h3 className={styles.sectionTitle}>
-//           <span className={styles.sectionIcon}>💳</span>
-//           Payment Details
-//         </h3>
-
-//         <div className={styles.cardElementContainer}>
-//           <CardElement
-//             options={{
-//               style: {
-//                 base: {
-//                   fontSize: '16px',
-//                   color: '#2b2b2b',
-//                   fontFamily: 'Poppins, sans-serif',
-//                   '::placeholder': {
-//                     color: '#aab7c4',
-//                   },
-//                 },
-//                 invalid: {
-//                   color: '#dc2626',
-//                   iconColor: '#dc2626',
-//                 },
-//               },
-//             }}
-//             className={styles.cardElement}
-//           />
-//         </div>
-
-//         {paymentError && (
-//           <div className={styles.errorMessage}>
-//             <span className={styles.errorIcon}>⚠️</span>
-//             {paymentError}
-//           </div>
-//         )}
-
-//         <div className={styles.securityNote}>
-//           <span className={styles.securityIcon}>🔒</span>
-//           <span className={styles.securityText}>
-//             Your payment information is secure and encrypted
-//           </span>
-//         </div>
-//       </div>
-
-//       <button
-//         type="submit"
-//         className={styles.payButton}
-//         disabled={!stripe || isProcessing}
-//       >
-//         {isProcessing ? (
-//           <>
-//             <span className={styles.spinner}></span>
-//             Processing Payment...
-//           </>
-//         ) : (
-//           <>
-//             <span className={styles.buttonIcon}>💳</span>
-//             Pay £{(paymentData.amount / 100).toFixed(2)}
-//           </>
-//         )}
-//       </button>
-//     </form>
-//   )
-// }
-
-// const PaymentPage: React.FC = () => {
-//   const location = useLocation()
-//   const navigate = useNavigate()
-//   const [paymentData, setPaymentData] = useState<PaymentData | null>(null)
-
-//   useEffect(() => {
-//     // Get payment data from navigation state
-//     if (location.state?.paymentData) {
-//       setPaymentData(location.state.paymentData)
-//     } else {
-//       // Redirect to subscription if no payment data
-//       navigate('/subscription')
-//     }
-//   }, [location.state, navigate])
-
-//   if (!paymentData) {
-//     return (
-//       <div className={styles.paymentPage}>
-//         <div className={styles.container}>
-//           <div className={styles.loadingCard}>
-//             <div className={styles.loadingIcon}>⏳</div>
-//             <h2 className={styles.loadingTitle}>Loading Payment...</h2>
-//           </div>
-//         </div>
-//       </div>
-//     )
-//   }
-
-//   return (
-//     <div className={styles.paymentPage}>
-//       <div className={styles.container}>
-//         <div className={styles.paymentCard}>
-//           <div className={styles.header}>
-//             <button
-//               className={styles.backButton}
-//               onClick={() => navigate('/subscription')}
-//             >
-//               ← Back to Subscription
-//             </button>
-//             <h2 className={styles.title}>Complete Your Payment</h2>
-//             <p className={styles.subtitle}>
-//               Secure payment powered by Stripe
-//             </p>
-//           </div>
-
-//           <div className={styles.orderSummary}>
-//             <h3 className={styles.summaryTitle}>Order Summary</h3>
-//             <div className={styles.summaryDetails}>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.summaryLabel}>Plan:</span>
-//                 <span className={styles.summaryValue}>
-//                   {paymentData.planType === 'veg' ? 'Vegetarian' : 'Non-Vegetarian'}
-//                 </span>
-//               </div>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.summaryLabel}>Delivery Time:</span>
-//                 <span className={styles.summaryValue}>{paymentData.deliverySlot}</span>
-//               </div>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.summaryLabel}>Customer:</span>
-//                 <span className={styles.summaryValue}>{paymentData.name}</span>
-//               </div>
-//               {paymentData.studentStatus && (
-//                 <div className={styles.summaryItem}>
-//                   <span className={styles.summaryLabel}>Student Discount:</span>
-//                   <span className={styles.summaryValue}>20% off</span>
-//                 </div>
-//               )}
-//               <div className={styles.summaryDivider}></div>
-//               <div className={styles.summaryItem}>
-//                 <span className={styles.totalLabel}>Total Amount:</span>
-//                 <span className={styles.totalValue}>
-//                   £{(paymentData.amount / 100).toFixed(2)}
-//                 </span>
-//               </div>
-//             </div>
-//           </div>
-
-//           <Elements stripe={stripePromise}>
-//             <PaymentForm paymentData={paymentData} />
-//           </Elements>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default PaymentPage
+export default PaymentPage;

@@ -60,14 +60,6 @@ const StudentDiscount: React.FC = () => {
               deserves wholesome food that doesn't break the budget. 🥗
             </p>
             
-            <div className={styles.trustBadge}>
-              <div className={styles.badgeIcon}>🛡️</div>
-              <div className={styles.badgeText}>
-                <span className={styles.badgeTitle}>Amma Certified</span>
-                <span className={styles.badgeSubtitle}>Verified Clean Kitchen</span>
-              </div>
-            </div>
-            
             <div className={styles.ctaSection}>
               <button 
                 className={styles.ctaButton}
@@ -87,7 +79,7 @@ const StudentDiscount: React.FC = () => {
               </div>
               <div className={styles.benefit}>
                 <span className={styles.benefitIcon}>🚚</span>
-                <span className={styles.benefitText}>Free delivery to hostels</span>
+                <span className={styles.benefitText}>Free Delivery</span>
               </div>
               <div className={styles.benefit}>
                 <span className={styles.benefitIcon}>⏰</span>

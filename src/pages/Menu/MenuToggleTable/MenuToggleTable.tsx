@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMenuItems, MenuItem } from '../../../services/firestore'
 import styles from './MenuToggleTable.module.css'
@@ -107,13 +107,15 @@ const MenuToggleTable: React.FC = () => {
               className={`${styles.tab} ${activeTab === 'veg' ? styles.active : ''}`}
               onClick={() => setActiveTab('veg')}
             >
-              🥬 Vegetarian
+              <span className={styles.tabIcon}>🥬</span>
+              Vegetarian
             </button>
             <button
               className={`${styles.tab} ${activeTab === 'non-veg' ? styles.active : ''}`}
               onClick={() => setActiveTab('non-veg')}
             >
-              🍗 Non-Vegetarian
+              <span className={styles.tabIcon}>🍗</span>
+              Non-Vegetarian
             </button>
           </div>
         </div>

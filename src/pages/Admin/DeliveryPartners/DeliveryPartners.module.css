@@ -484,7 +484,8 @@
 }
 
 .editButton,
-.deleteButton {
+.deleteButton,
+.viewButton {
   background: transparent;
   border: 2px solid transparent;
   border-radius: 6px;
@@ -496,6 +497,17 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
+}
+
+.viewButton {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.viewButton:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  transform: scale(1.1);
 }
 
 .editButton {
@@ -637,6 +649,103 @@
   opacity: 0.8;
 }
 
+/* Rider Details Modal */
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.detailGroup {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.detailTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.detailLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2b2b2b;
+  opacity: 0.7;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2b2b2b;
+  text-align: right;
+}
+
+.identityProofSection {
+  background: #f0f9ff;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.identityProofPreview {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  min-height: 200px;
+}
+
+.identityImage {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 4px;
+}
+
+.pdfPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdfIcon {
+  font-size: 3rem;
+  color: #dc2626;
+}
+
+.pdfLink {
+  background: #3b82f6;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.pdfLink:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .controlsSection {
@@ -650,6 +759,10 @@
   
   .addButton {
     align-self: flex-end;
+  }
+  
+  .detailsGrid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -751,7 +864,8 @@
   }
   
   .editButton,
-  .deleteButton {
+  .deleteButton,
+  .viewButton {
     width: 28px;
     height: 28px;
     font-size: 0.8rem;
@@ -770,6 +884,7 @@
   
   .editButton,
   .deleteButton,
+  .viewButton,
   .addButton,
   .submitButton,
   .cancelButton {
@@ -788,6 +903,7 @@
   .tableRow,
   .editButton,
   .deleteButton,
+  .viewButton,
   .addButton,
   .submitButton,
   .cancelButton,
@@ -799,6 +915,7 @@
   .partnerCard:hover,
   .editButton:hover,
   .deleteButton:hover,
+  .viewButton:hover,
   .addButton:hover,
   .submitButton:hover,
   .statusBadge:hover {
@@ -814,6 +931,7 @@
 .addButton:focus,
 .editButton:focus,
 .deleteButton:focus,
+.viewButton:focus,
 .submitButton:focus,
 .cancelButton:focus,
 .closeButton:focus,

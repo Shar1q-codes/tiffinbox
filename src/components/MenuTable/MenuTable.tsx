@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { getWeeklyMenu, WeeklyMeal } from '../../services/firestore'
 import styles from './MenuTable.module.css'
-
-interface WeeklyMeal {
-  day: string
-  vegCurry: string
-  vegDry: string
-  nonVegCurry: string
-  rice: string
-  bread: string
-  dips: string
-}
 
 const MenuTable: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const [weeklyMeals, setWeeklyMeals] = useState<WeeklyMeal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -29,66 +23,56 @@ const MenuTable: React.FC = () => {
       observer.observe(section)
     }
 
+    // Load weekly menu from Firestore
+    const loadWeeklyMenu = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const meals = await getWeeklyMenu()
+        setWeeklyMeals(meals)
+      } catch (err) {
+        console.error('Error loading weekly menu:', err)
+        setError('Failed to load weekly menu. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadWeeklyMenu()
+
     return () => observer.disconnect()
   }, [])
 
-  // Fixed weekly meal data as specified
-  const weeklyMeals: WeeklyMeal[] = [
-    {
-      day: "MONDAY",
-      vegCurry: "TADKA DAL",
-      vegDry: "MUTTER",
-      nonVegCurry: "CHICKEN KARAHI",
-      rice: "BOILED RICE",
-      bread: "CHAPATI",
-      dips: "RAITA"
-    },
-    {
-      day: "TUESDAY",
-      vegCurry: "BLACK EYE DAL",
-      vegDry: "ALOO MUTTER",
-      nonVegCurry: "CHICKEN TIKKA MASALA",
-      rice: "BOILED RICE",
-      bread: "CHAPATI",
-      dips: "RAITA"
-    },
-    {
-      day: "WEDNESDAY",
-      vegCurry: "RAJMA",
-      vegDry: "DUM ALOO",
-      nonVegCurry: "BUTTER CHICKEN",
-      rice: "BOILED RICE",
-      bread: "CHAPATI",
-      dips: "RAITA"
-    },
-    {
-      day: "THURSDAY",
-      vegCurry: "MIX DAL",
-      vegDry: "MUTTER PANEER",
-      nonVegCurry: "LAMB BIRYANI",
-      rice: "BOILED RICE",
-      bread: "CHAPATI",
-      dips: "RAITA"
-    },
-    {
-      day: "FRIDAY",
-      vegCurry: "CHANA MASALA",
-      vegDry: "MIX VEG",
-      nonVegCurry: "LAMB KARAHI",
-      rice: "BOILED RICE",
-      bread: "CHAPATI",
-      dips: "RAITA"
-    },
-    {
-      day: "SATURDAY",
-      vegCurry: "BUTTER PANEER",
-      vegDry: "SWEET",
-      nonVegCurry: "CHICKEN BIRYANI",
-      rice: "BOILED RICE",
-      bread: "CHAPATI",
-      dips: "RAITA"
-    }
-  ]
+  if (loading) {
+    return (
+      <section id="menu-table" className={styles.menuTable}>
+        <div className={styles.container}>
+          <div className={`${styles.header} ${isVisible ? styles.fadeIn : ''}`}>
+            <h2 className={styles.title}>Weekly Menu Plan</h2>
+            <p className={styles.subtitle}>
+              Loading weekly menu...
+            </p>
+          </div>
+          <div className={`${styles.tableContainer} ${styles.loading}`}></div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section id="menu-table" className={styles.menuTable}>
+        <div className={styles.container}>
+          <div className={`${styles.header} ${isVisible ? styles.fadeIn : ''}`}>
+            <h2 className={styles.title}>Weekly Menu Plan</h2>
+            <p className={styles.subtitle} style={{ color: '#d62828' }}>
+              {error}
+            </p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section id="menu-table" className={styles.menuTable}>
@@ -117,7 +101,7 @@ const MenuTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className={styles.tableBody}>
-              {weeklyMeals.map((meal, index) => (
+              {weeklyMeals.map((meal) => (
                 <tr key={meal.day} className={styles.tableRow}>
                   <td className={styles.tableCell}>{meal.day}</td>
                   <td className={styles.tableCell}>{meal.vegCurry}</td>
@@ -146,7 +130,7 @@ const MenuTable: React.FC = () => {
                 </tr>
               </thead>
               <tbody className={styles.tableBody}>
-                {weeklyMeals.map((meal, index) => (
+                {weeklyMeals.map((meal) => (
                   <tr key={meal.day} className={styles.tableRow}>
                     <td className={styles.tableCell}>{meal.day}</td>
                     <td className={styles.tableCell}>{meal.vegCurry}</td>

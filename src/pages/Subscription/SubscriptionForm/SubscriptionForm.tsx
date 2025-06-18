@@ -7,7 +7,11 @@ interface FormData {
   name: string
   contactNumber: string
   email: string
-  address: string
+  buildingStreet: string
+  flatNumber: string
+  postCode: string
+  town: string
+  country: string
   deliverySlot: string
   planType: 'veg' | 'non-veg'
   studentStatus: boolean
@@ -31,7 +35,11 @@ const SubscriptionForm: React.FC = () => {
     name: '',
     contactNumber: '',
     email: '',
-    address: '',
+    buildingStreet: '',
+    flatNumber: '',
+    postCode: '',
+    town: '',
+    country: 'United Kingdom',
     deliverySlot: '',
     planType: 'veg',
     studentStatus: false,
@@ -72,6 +80,22 @@ const SubscriptionForm: React.FC = () => {
     { time: '22:00', label: '10:00 PM', icon: '🌙' }
   ]
 
+  const countries = [
+    "United Kingdom",
+    "Ireland",
+    "France",
+    "Germany",
+    "Spain",
+    "Italy",
+    "Netherlands",
+    "Belgium",
+    "Portugal",
+    "Sweden",
+    "Denmark",
+    "Norway",
+    "Finland"
+  ]
+
   const handleSlotSelect = (time: string) => {
     setSelectedSlot(time)
     setFormData(prev => ({ ...prev, deliverySlot: time }))
@@ -87,7 +111,7 @@ const SubscriptionForm: React.FC = () => {
     setFormData(prev => ({ ...prev, subscriptionType: type }))
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
 
@@ -139,20 +163,34 @@ const SubscriptionForm: React.FC = () => {
     try {
       setIsSubmitting(true)
       
-      // Save to Firebase and get tracking token
-      const result = await addCustomer({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.contactNumber,
-        address: formData.address,
-        deliverySlot: formData.deliverySlot,
-        planType: formData.planType,
-        studentStatus: formData.studentStatus,
-        subscriptionType: formData.subscriptionType
+      // Combine address fields into a single address string
+      const fullAddress = `${formData.flatNumber}, ${formData.buildingStreet}, ${formData.town}, ${formData.postCode}, ${formData.country}`
+      
+      // Calculate the amount in cents for Stripe
+      const basePrice = formData.planType === 'veg' ? 18199 : 25999 // in cents
+      let finalPrice = basePrice
+      
+      // The prices are already monthly-based, so no need to multiply by 30
+      
+      // Apply student discount if applicable (20%)
+      if (formData.studentStatus) {
+        finalPrice = Math.round(finalPrice * 0.8)
+      }
+      
+      // Redirect to payment page with payment data
+      navigate('/payment', {
+        state: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.contactNumber,
+          address: fullAddress,
+          deliverySlot: formData.deliverySlot,
+          planType: formData.planType,
+          studentStatus: formData.studentStatus,
+          amount: finalPrice,
+          currency: 'gbp'
+        }
       })
-
-      setTrackingToken(result.trackingToken)
-      setSubmitSuccess(true)
 
     } catch (error) {
       console.error('Error submitting subscription:', error)
@@ -171,7 +209,11 @@ const SubscriptionForm: React.FC = () => {
       name: '',
       contactNumber: '',
       email: '',
-      address: '',
+      buildingStreet: '',
+      flatNumber: '',
+      postCode: '',
+      town: '',
+      country: 'United Kingdom',
       deliverySlot: '',
       planType: 'veg',
       studentStatus: false,
@@ -186,27 +228,26 @@ const SubscriptionForm: React.FC = () => {
     setFileError('')
   }
 
-  const isFormValid = formData.name && formData.contactNumber && formData.email && formData.address && formData.deliverySlot
+  const isFormValid = formData.name && 
+                      formData.contactNumber && 
+                      formData.email && 
+                      formData.buildingStreet && 
+                      formData.postCode && 
+                      formData.town && 
+                      formData.deliverySlot
 
   // Calculate prices based on plan and subscription type
-  const getDailyPrice = () => {
-    const basePrice = selectedPlan === 'veg' ? 181.99 : 259.99
-    return basePrice
-  }
-
   const getMonthlyPrice = () => {
-    const dailyPrice = getDailyPrice()
-    // No discount for monthly subscription (30 days)
-    return dailyPrice * 30
+    return selectedPlan === 'veg' ? 181.99 : 259.99
   }
 
   const getCurrentPrice = () => {
-    const price = selectedSubscription === 'daily' ? getDailyPrice() : getMonthlyPrice()
+    const price = getMonthlyPrice()
     return formData.studentStatus ? price * 0.8 : price
   }
 
   const formatPrice = (price: number) => {
-    return `₹${price.toFixed(2)}`
+    return `£${price.toFixed(2)}`
   }
 
   if (submitSuccess) {
@@ -327,7 +368,7 @@ const SubscriptionForm: React.FC = () => {
                   <div className={styles.planIcon}>🥬</div>
                   <div className={styles.planInfo}>
                     <h4 className={styles.planName}>Vegetarian</h4>
-                    <p className={styles.planPrice}>₹181.99/day</p>
+                    <p className={styles.planPrice}>£181.99/month</p>
                     <p className={styles.planDescription}>Fresh veg curries, dal, rice & rotis</p>
                   </div>
                   <div className={styles.planCheck}>
@@ -343,7 +384,7 @@ const SubscriptionForm: React.FC = () => {
                   <div className={styles.planIcon}>🍗</div>
                   <div className={styles.planInfo}>
                     <h4 className={styles.planName}>Non-Vegetarian</h4>
-                    <p className={styles.planPrice}>₹259.99/day</p>
+                    <p className={styles.planPrice}>£259.99/month</p>
                     <p className={styles.planDescription}>Chicken, mutton curries with sides</p>
                   </div>
                   <div className={styles.planCheck}>
@@ -408,7 +449,7 @@ const SubscriptionForm: React.FC = () => {
                     value={formData.contactNumber}
                     onChange={handleInputChange}
                     className={styles.fieldInput}
-                    placeholder="+91 98765 43210"
+                    placeholder="+44 7XXX XXXXXX"
                     required
                   />
                 </div>
@@ -430,19 +471,87 @@ const SubscriptionForm: React.FC = () => {
                 </div>
 
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="address" className={styles.fieldLabel}>
-                    Delivery Address *
+                  <label htmlFor="flatNumber" className={styles.fieldLabel}>
+                    Flat Number *
                   </label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    value={formData.address}
+                  <input
+                    type="text"
+                    id="flatNumber"
+                    name="flatNumber"
+                    value={formData.flatNumber}
                     onChange={handleInputChange}
-                    className={styles.fieldTextarea}
-                    placeholder="Enter your complete delivery address with landmark"
-                    rows={3}
+                    className={styles.fieldInput}
+                    placeholder="Flat/Apartment number"
                     required
                   />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label htmlFor="buildingStreet" className={styles.fieldLabel}>
+                    Building/Street *
+                  </label>
+                  <input
+                    type="text"
+                    id="buildingStreet"
+                    name="buildingStreet"
+                    value={formData.buildingStreet}
+                    onChange={handleInputChange}
+                    className={styles.fieldInput}
+                    placeholder="Building name and street"
+                    required
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label htmlFor="town" className={styles.fieldLabel}>
+                    Town/City *
+                  </label>
+                  <input
+                    type="text"
+                    id="town"
+                    name="town"
+                    value={formData.town}
+                    onChange={handleInputChange}
+                    className={styles.fieldInput}
+                    placeholder="Town or city"
+                    required
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label htmlFor="postCode" className={styles.fieldLabel}>
+                    Post Code *
+                  </label>
+                  <input
+                    type="text"
+                    id="postCode"
+                    name="postCode"
+                    value={formData.postCode}
+                    onChange={handleInputChange}
+                    className={styles.fieldInput}
+                    placeholder="Post code"
+                    required
+                  />
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label htmlFor="country" className={styles.fieldLabel}>
+                    Country *
+                  </label>
+                  <select
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    className={styles.fieldInput}
+                    required
+                  >
+                    {countries.map(country => (
+                      <option key={country} value={country}>
+                        {country}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -453,7 +562,7 @@ const SubscriptionForm: React.FC = () => {
                 <div className={styles.discountIcon}>🎓</div>
                 <div className={styles.discountContent}>
                   <h4 className={styles.discountTitle}>Student Discount Available</h4>
-                  <p className={styles.discountText}>Get 20% off with valid UK student ID</p>
+                  <p className={styles.discountText}>Get 20% off with valid student ID</p>
                 </div>
                 <label className={styles.checkboxContainer}>
                   <input
@@ -472,7 +581,7 @@ const SubscriptionForm: React.FC = () => {
               {formData.studentStatus && (
                 <div className={styles.fieldGroup} style={{ marginTop: '1rem' }}>
                   <label htmlFor="studentIdFile" className={styles.fieldLabel}>
-                    Upload Student ID (UK) *
+                    Upload Student ID *
                   </label>
                   <input
                     type="file"
@@ -484,7 +593,7 @@ const SubscriptionForm: React.FC = () => {
                     required={formData.studentStatus}
                   />
                   <div className={styles.inputHint}>
-                    Upload your valid UK student ID (PDF, JPG, PNG, max 5MB)
+                    Upload your valid student ID (PDF, JPG, PNG, max 5MB)
                   </div>
                   {fileError && (
                     <div className={styles.errorMessage} style={{ fontSize: '0.7rem', color: '#d62828', marginTop: '0.25rem' }}>
@@ -513,10 +622,7 @@ const SubscriptionForm: React.FC = () => {
                 <div className={styles.summaryRow}>
                   <span className={styles.summaryLabel}>Base Price:</span>
                   <span className={styles.summaryValue}>
-                    {selectedSubscription === 'daily' 
-                      ? `${formatPrice(getDailyPrice())}/day`
-                      : `${formatPrice(getDailyPrice() * 30)} for 30 days`
-                    }
+                    {formatPrice(getMonthlyPrice())}
                   </span>
                 </div>
                 {formData.studentStatus && (
@@ -530,7 +636,6 @@ const SubscriptionForm: React.FC = () => {
                   <span className={styles.totalLabel}>Total:</span>
                   <span className={styles.totalValue}>
                     {formatPrice(getCurrentPrice())}
-                    {selectedSubscription === 'daily' ? '/day' : ' for 30 days'}
                   </span>
                 </div>
               </div>

@@ -13,6 +13,7 @@ interface SignupFormData {
   confirmPassword: string
   vehicleType: 'bike' | 'car' | 'scooter'
   vehicleNumber: string
+  identityProof: File | null
   agreeToTerms: boolean
 }
 
@@ -26,11 +27,13 @@ const RiderSignup: React.FC = () => {
     confirmPassword: '',
     vehicleType: 'bike',
     vehicleNumber: '',
+    identityProof: null,
     agreeToTerms: false
   })
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [fileError, setFileError] = useState('')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -47,6 +50,28 @@ const RiderSignup: React.FC = () => {
     }
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError('File size exceeds 5MB limit')
+        return
+      }
+      
+      // Check file type (only PDF, JPG, PNG)
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png']
+      if (!validTypes.includes(file.type)) {
+        setFileError('Only PDF, JPG, and PNG files are allowed')
+        return
+      }
+      
+      setFileError('')
+      setFormData(prev => ({ ...prev, identityProof: file }))
+    }
+  }
+
   const validateForm = (): boolean => {
     // Check if all required fields are filled
     if (!formData.name.trim() || 
@@ -54,7 +79,8 @@ const RiderSignup: React.FC = () => {
         !formData.phone.trim() || 
         !formData.password.trim() || 
         !formData.confirmPassword.trim() || 
-        !formData.vehicleNumber.trim()) {
+        !formData.vehicleNumber.trim() ||
+        !formData.identityProof) {
       setErrorMessage('Please fill in all required fields')
       return false
     }
@@ -113,6 +139,12 @@ const RiderSignup: React.FC = () => {
         formData.password
       )
 
+      // Convert identity proof to base64 for storage
+      let identityProofBase64 = null
+      if (formData.identityProof) {
+        identityProofBase64 = await convertFileToBase64(formData.identityProof)
+      }
+
       // Add rider to Firestore
       await addRider({
         name: formData.name,
@@ -120,6 +152,9 @@ const RiderSignup: React.FC = () => {
         phone: formData.phone,
         vehicleType: formData.vehicleType,
         vehicleNumber: formData.vehicleNumber,
+        identityProof: identityProofBase64,
+        identityProofFileName: formData.identityProof?.name || '',
+        identityProofType: formData.identityProof?.type || '',
         isActive: false // Riders need admin approval before becoming active
       })
 
@@ -135,6 +170,7 @@ const RiderSignup: React.FC = () => {
         confirmPassword: '',
         vehicleType: 'bike',
         vehicleNumber: '',
+        identityProof: null,
         agreeToTerms: false
       })
 
@@ -158,6 +194,16 @@ const RiderSignup: React.FC = () => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Helper function to convert file to base64
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
   }
 
   return (
@@ -297,6 +343,32 @@ const RiderSignup: React.FC = () => {
                 />
               </div>
 
+              {/* Identity Proof */}
+              <div className={styles.fieldGroup}>
+                <label htmlFor="identityProof" className={styles.fieldLabel}>
+                  <span className={styles.labelIcon}>🪪</span>
+                  Proof of Identity *
+                </label>
+                <input
+                  type="file"
+                  id="identityProof"
+                  name="identityProof"
+                  onChange={handleFileChange}
+                  className={styles.fieldInput}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  required
+                  disabled={isLoading}
+                />
+                <div className={styles.passwordRequirements}>
+                  Upload your driver's license or other valid ID (PDF, JPG, PNG, max 5MB)
+                </div>
+                {fileError && (
+                  <div className={styles.errorMessage} style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                    {fileError}
+                  </div>
+                )}
+              </div>
+
               {/* Password */}
               <div className={styles.fieldGroup}>
                 <label htmlFor="password" className={styles.fieldLabel}>
@@ -362,7 +434,7 @@ const RiderSignup: React.FC = () => {
             <button
               type="submit"
               className={styles.submitButton}
-              disabled={!formData.agreeToTerms || isLoading}
+              disabled={!formData.agreeToTerms || isLoading || !!fileError}
             >
               {isLoading ? 'Creating Account...' : 'Sign Up as Delivery Partner'}
             </button>

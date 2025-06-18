@@ -8,6 +8,7 @@ import {
   getPendingRiders,
   approveRider
 } from '../../../services/firestore'
+import { getRiderById } from '../../../services/riderService'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../../../firebase/config'
 import styles from './DeliveryPartners.module.css'
@@ -31,6 +32,8 @@ const DeliveryPartners: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'pending'>('all')
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [selectedPartner, setSelectedPartner] = useState<DeliveryPartner | null>(null)
   
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -151,6 +154,20 @@ const DeliveryPartners: React.FC = () => {
       isActive: partner.isActive
     })
     setShowForm(true)
+  }
+
+  const handleViewDetails = async (partner: DeliveryPartner) => {
+    try {
+      // Get the latest data for this partner
+      const latestData = await getRiderById(partner.id!)
+      if (latestData) {
+        setSelectedPartner(latestData)
+        setShowDetailsModal(true)
+      }
+    } catch (error) {
+      console.error('Error fetching rider details:', error)
+      alert('Failed to load rider details. Please try again.')
+    }
   }
 
   const handleDelete = async (partner: DeliveryPartner) => {
@@ -447,6 +464,153 @@ const DeliveryPartners: React.FC = () => {
         </div>
       )}
 
+      {/* Rider Details Modal */}
+      {showDetailsModal && selectedPartner && (
+        <div className={styles.formOverlay}>
+          <div className={styles.formModal}>
+            <div className={styles.formHeader}>
+              <h3 className={styles.formTitle}>
+                🏍️ Rider Details: {selectedPartner.name}
+              </h3>
+              <button
+                className={styles.closeButton}
+                onClick={() => setShowDetailsModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className={styles.form} style={{ padding: '1rem 2rem 2rem' }}>
+              <div className={styles.detailsGrid}>
+                <div className={styles.detailGroup}>
+                  <h4 className={styles.detailTitle}>Personal Information</h4>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Name:</span>
+                    <span className={styles.detailValue}>{selectedPartner.name}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Email:</span>
+                    <span className={styles.detailValue}>{selectedPartner.email}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Phone:</span>
+                    <span className={styles.detailValue}>{selectedPartner.phone}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Joined:</span>
+                    <span className={styles.detailValue}>
+                      {selectedPartner.joinedDate.toDate().toLocaleDateString()} at {selectedPartner.joinedDate.toDate().toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Status:</span>
+                    <span className={`${styles.statusBadge} ${selectedPartner.isActive ? styles.active : styles.inactive}`}>
+                      {selectedPartner.isActive ? '✅ Active' : '❌ Inactive'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.detailGroup}>
+                  <h4 className={styles.detailTitle}>Vehicle Information</h4>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Vehicle Type:</span>
+                    <span className={styles.detailValue}>
+                      {selectedPartner.vehicleType === 'bike' ? '🏍️ Bike' : 
+                       selectedPartner.vehicleType === 'scooter' ? '🛵 Scooter' : '🚗 Car'}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Vehicle Number:</span>
+                    <span className={styles.detailValue}>{selectedPartner.vehicleNumber}</span>
+                  </div>
+                </div>
+
+                <div className={styles.detailGroup}>
+                  <h4 className={styles.detailTitle}>Performance</h4>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Total Deliveries:</span>
+                    <span className={styles.detailValue}>{selectedPartner.totalDeliveries}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Current Orders:</span>
+                    <span className={styles.detailValue}>{selectedPartner.currentOrders}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Rating:</span>
+                    <span className={styles.detailValue}>⭐ {selectedPartner.rating.toFixed(1)}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Last Active:</span>
+                    <span className={styles.detailValue}>
+                      {selectedPartner.lastActive.toDate().toLocaleDateString()} at {selectedPartner.lastActive.toDate().toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedPartner.identityProof && (
+                  <div className={styles.detailGroup} style={{ gridColumn: '1 / -1' }}>
+                    <h4 className={styles.detailTitle}>Identity Verification</h4>
+                    <div className={styles.identityProofSection}>
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Document Type:</span>
+                        <span className={styles.detailValue}>
+                          {selectedPartner.identityProofType?.includes('pdf') ? 'PDF Document' : 'Photo ID'}
+                        </span>
+                      </div>
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>File Name:</span>
+                        <span className={styles.detailValue}>{selectedPartner.identityProofFileName}</span>
+                      </div>
+                      <div className={styles.identityProofPreview}>
+                        {selectedPartner.identityProofType?.includes('image') ? (
+                          <img 
+                            src={selectedPartner.identityProof} 
+                            alt="Identity document" 
+                            className={styles.identityImage}
+                          />
+                        ) : (
+                          <div className={styles.pdfPreview}>
+                            <span className={styles.pdfIcon}>📄</span>
+                            <a 
+                              href={selectedPartner.identityProof} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className={styles.pdfLink}
+                            >
+                              View Document
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.formActions} style={{ marginTop: '2rem' }}>
+                <button
+                  type="button"
+                  className={styles.cancelButton}
+                  onClick={() => setShowDetailsModal(false)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className={styles.submitButton}
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    handleEdit(selectedPartner);
+                  }}
+                >
+                  Edit Partner
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pending Applications Section */}
       {pendingPartners.length > 0 && statusFilter !== 'active' && statusFilter !== 'inactive' && (
         <div className={styles.tableContainer} style={{ marginBottom: '2rem' }}>
@@ -498,6 +662,13 @@ const DeliveryPartners: React.FC = () => {
                   </td>
                   <td className={styles.tableCell}>
                     <div className={styles.actions}>
+                      <button
+                        className={styles.viewButton}
+                        onClick={() => handleViewDetails(partner)}
+                        title="View details"
+                      >
+                        🔍
+                      </button>
                       <button
                         className={styles.editButton}
                         style={{ background: '#10b981', color: 'white', width: 'auto', padding: '0.5rem 1rem' }}
@@ -600,6 +771,13 @@ const DeliveryPartners: React.FC = () => {
                     <td className={styles.tableCell}>
                       <div className={styles.actions}>
                         <button
+                          className={styles.viewButton}
+                          onClick={() => handleViewDetails(partner)}
+                          title="View details"
+                        >
+                          🔍
+                        </button>
+                        <button
                           className={styles.editButton}
                           onClick={() => handleEdit(partner)}
                         >
@@ -632,6 +810,13 @@ const DeliveryPartners: React.FC = () => {
                       </div>
                     </div>
                     <div className={styles.cardActions}>
+                      <button
+                        className={styles.viewButton}
+                        onClick={() => handleViewDetails(partner)}
+                        title="View details"
+                      >
+                        🔍
+                      </button>
                       <button
                         className={styles.editButton}
                         onClick={() => handleEdit(partner)}

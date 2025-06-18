@@ -245,6 +245,21 @@ const AdminDashboard: React.FC = () => {
               fontFamily: 'Poppins, sans-serif',
               fontWeight: '500'
             }}
+            onClick={() => window.location.href = '/admin/subscriptions'}
+          >
+            📅 Manage Subscriptions
+          </button>
+          <button 
+            style={{
+              background: '#d62828',
+              color: '#ffffff',
+              border: 'none',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '500'
+            }}
             onClick={() => window.location.href = '/admin/delivery'}
           >
             🚚 Manage Deliveries & Send Emails

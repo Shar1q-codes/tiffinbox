@@ -11,6 +11,12 @@ service cloud.firestore {
       allow write: if request.auth != null && isAdmin();
     }
     
+    // Allow read access to weekly menu for all users
+    match /weeklyMenu/{document} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
     // Customer data - allow creation for all users, read/write for authenticated users
     match /customers/{document} {
       allow create: if true; // Allow unauthenticated users to create subscription records
@@ -73,6 +79,16 @@ service cloud.firestore {
              get(/databases/$(database)/documents/deliveryPartners/$(assignedPartnerId)).data.email == request.auth.token.email;
     }
     
+    // Payment history - allow authenticated users to read their own records
+    // allow creation for payment processes
+    match /paymentHistory/{document} {
+      allow create: if true;  // Allow payment service to create records
+      allow read: if request.auth != null && 
+                 (resource.data.customerId == request.auth.uid);
+      allow update: if request.auth != null && 
+                   (resource.data.customerId == request.auth.uid);
+    }
+    
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;
@@ -119,14 +135,4 @@ SECURITY CONSIDERATIONS:
 - All database writes are logged and auditable
 - Self-registered riders cannot access the system until approved
 - Unauthenticated users can create subscription records to enable new customer signups
-
-DEPLOYMENT CHECKLIST:
-1. Update admin email addresses in the security rules
-2. Deploy these rules to your Firebase project
-3. Test authentication flows for all user types
-4. Verify that riders can only access their assigned orders
-5. Confirm that customers can track their orders
-6. Test OTP generation and email notifications
-7. Verify that self-registered riders cannot access the system until approved
-8. Test that unauthenticated users can successfully submit subscription forms
 */

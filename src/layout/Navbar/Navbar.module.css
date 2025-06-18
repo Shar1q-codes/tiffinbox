@@ -209,7 +209,7 @@
 /* Mobile Navigation */
 .mobileNav {
   position: fixed;
-  top: 130px; /* Banner (60px) + navbar (70px) */
+  top: 145px; /* Banner (80px) + navbar (65px) */
   left: 0;
   right: 0;
   background: #ffffff;
@@ -333,6 +333,10 @@
   
   .mobileMenuButton {
     display: flex;
+  }
+  
+  .container {
+    height: 65px;
   }
   
   .mobileNav {

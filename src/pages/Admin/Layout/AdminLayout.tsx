@@ -39,6 +39,7 @@ const AdminLayout: React.FC = () => {
     { path: '/admin/dashboard', label: 'Dashboard', icon: '📋' },
     { path: '/admin/menu', label: 'Menu Editor', icon: '🍽️' },
     { path: '/admin/customers', label: 'Customers', icon: '👥' },
+    { path: '/admin/subscriptions', label: 'Subscriptions', icon: '📅' },
     { path: '/admin/delivery', label: 'Delivery & Notifications', icon: '🚚' },
     { path: '/admin/partners', label: 'Delivery Partners', icon: '🏍️' }
   ]

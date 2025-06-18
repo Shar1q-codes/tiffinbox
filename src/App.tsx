@@ -1,18 +1,24 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { PaymentProvider } from './contexts/PaymentContext'
 import PrivateRoute from './components/PrivateRoute'
 import RiderRoute from './components/RiderRoute'
-import GlasgowBanner from './components/GlasgowBanner/GlasgowBanner'
 import Navbar from './layout/Navbar/Navbar'
+import GlasgowBanner from './components/GlasgowBanner/GlasgowBanner'
 import Home from './pages/Home/Home'
 import Menu from './pages/Menu/Menu'
 import Subscription from './pages/Subscription/Subscription'
 import Tracking from './pages/Tracking/Tracking'
+import PaymentPage from './pages/Payment/PaymentPage'
+import PaymentSuccess from './pages/Payment/PaymentSuccess'
+import PaymentCancel from './pages/Payment/PaymentCancel'
 import AdminLogin from './pages/Admin/Login/AdminLogin'
 import AdminLayout from './pages/Admin/Layout/AdminLayout'
 import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard'
 import MenuEditor from './pages/Admin/MenuEditor/MenuEditor'
 import CustomerTable from './pages/Admin/Customers/CustomerTable'
+import SubscriptionsManager from './pages/Admin/Subscriptions/SubscriptionsManager'
+import SubscriptionDetail from './pages/Admin/Subscriptions/SubscriptionDetail'
 import DeliveryTable from './pages/Admin/Delivery/DeliveryTable'
 import DeliveryPartners from './pages/Admin/DeliveryPartners/DeliveryPartners'
 import RiderLogin from './pages/Rider/Login/RiderLogin'
@@ -22,8 +28,9 @@ import RiderDashboard from './pages/Rider/Dashboard/RiderDashboard'
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
+      <PaymentProvider>
+        <Router>
+          <Routes>
           {/* Admin login route (no layout) */}
           <Route path="/admin/login" element={<AdminLogin />} />
           
@@ -47,6 +54,8 @@ function App() {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="menu" element={<MenuEditor />} />
             <Route path="customers" element={<CustomerTable />} />
+            <Route path="subscriptions" element={<SubscriptionsManager />} />
+            <Route path="subscriptions/:id" element={<SubscriptionDetail />} />
             <Route path="delivery" element={<DeliveryTable />} />
             <Route path="partners" element={<DeliveryPartners />} />
           </Route>
@@ -54,18 +63,22 @@ function App() {
           {/* Main app routes (with navbar and Glasgow banner) */}
           <Route path="/*" element={
             <>
-              <GlasgowBanner />
               <Navbar />
+              <GlasgowBanner />
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/menu" element={<Menu />} />
                 <Route path="/subscription" element={<Subscription />} />
+                <Route path="/payment" element={<PaymentPage />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="/tracking" element={<Tracking />} />
               </Routes>
             </>
           } />
         </Routes>
       </Router>
+      </PaymentProvider>
     </AuthProvider>
   )
 }
